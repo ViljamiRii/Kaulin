@@ -1,112 +1,102 @@
-use crate::frontend::lexer::{Token, TokenType, tokenize};
-use crate::frontend::ast::{Expr, Stmt, Program, BinaryExpr, Identifier, NumericLiteral, ExprStmt};
+use crate::frontend::lexer::*;
+use crate::frontend::ast::{Expr, BinaryExpr, Identifier, NumericLiteral, NodeType, Program, Stmt}; // Import the types from ast.rs
 
-// Parser struct holds the tokens to be parsed and the current position in the tokens vector
 pub struct Parser {
     tokens: Vec<Token>,
-    current: usize,
 }
 
 impl Parser {
-    // new function creates a new Parser with an empty tokens vector and current set to 0
-    pub fn new() -> Self {
-        Self { tokens: Vec::new(), current: 0 }
+    pub fn new(tokens: Vec<Token>) -> Self {
+        Self { tokens }
     }
 
-    // not_eof checks if the current token is not the end of file
     fn not_eof(&self) -> bool {
-        self.current < self.tokens.len() && self.tokens[self.current].token_type != TokenType::EOF
+        !matches!(self.tokens.first(), Some(Token { token_type: TokenType::EOF, .. }))
     }
 
-    // at returns the current token
     fn at(&self) -> &Token {
-        &self.tokens[self.current]
+        &self.tokens[0]
     }
 
-    // eat consumes the current token and moves to the next one
     fn eat(&mut self) -> Token {
-        let token = self.tokens[self.current].clone();
-        self.current += 1;
-        token
+        self.tokens.remove(0)
     }
 
-    // expect consumes the current token and checks if it's of the expected type
     fn expect(&mut self, token_type: TokenType) -> Token {
         let token = self.eat();
-        if token.token_type != token_type {
-            panic!("Unexpected token: {:?}", token);
-        }
+        assert_eq!(token.token_type, token_type);
         token
     }
 
-    // produce_ast generates the Abstract Syntax Tree (AST) from the source code
-    pub fn produce_ast(&mut self, source_code: &str) -> Program {
-        self.tokens = tokenize(source_code);
-        let mut program = Program { body: Vec::new() };
-
+    pub fn produce_ast(&mut self) -> Program {
+        let mut body = Vec::new();
+    
         while self.not_eof() {
-            program.body.push(self.parse_stmt());
+            body.push(Stmt::Expr(self.parse_stmt()));
         }
-
-        program
+    
+        Program { kind: NodeType::Program, body }
     }
 
-    // parse_stmt handles complex statement types
-    fn parse_stmt(&mut self) -> Box<dyn Stmt> {
-        Box::new(ExprStmt { expr: self.parse_expr() })
+    fn parse_stmt(&mut self) -> Expr {
+        self.parse_expr()
     }
 
-    // parse_expr handles expressions
-    fn parse_expr(&mut self) -> Box<dyn Expr> {
+    fn parse_expr(&mut self) -> Expr {
         self.parse_additive_expr()
     }
 
-    // parse_additive_expr handles addition and subtraction operations
-    fn parse_additive_expr(&mut self) -> Box<dyn Expr> {
+    fn parse_additive_expr(&mut self) -> Expr {
         let mut left = self.parse_multiplicative_expr();
-
+    
         while self.at().value == "+" || self.at().value == "-" {
             let operator = self.eat().value;
             let right = self.parse_multiplicative_expr();
-            let expr = BinaryExpr { left: left.clone_box(), right: right.clone_box(), operator: operator };
-            left = Box::new(expr);
+            left = Expr::BinaryExpr(BinaryExpr {
+                kind: NodeType::BinaryExpr,
+                left: Box::new(left),
+                right: Box::new(right),
+                operator,
+            });
         }
-
+    
         left
     }
 
-    // parse_multiplicative_expr handles multiplication, division, and modulo operations
-    fn parse_multiplicative_expr(&mut self) -> Box<dyn Expr> {
+    fn parse_multiplicative_expr(&mut self) -> Expr {
         let mut left = self.parse_primary_expr();
     
         while self.at().value == "*" || self.at().value == "/" || self.at().value == "%" {
             let operator = self.eat().value;
             let right = self.parse_primary_expr();
-            let expr = BinaryExpr { left: left.clone_box(), right: right, operator: operator };
-            left = Box::new(expr);
+            left = Expr::BinaryExpr(BinaryExpr {
+                kind: NodeType::BinaryExpr,
+                left: Box::new(left),
+                right: Box::new(right),
+                operator,
+            });
         }
     
         left
     }
 
-    // parse_primary_expr parses literal values and grouping expressions
-    fn parse_primary_expr(&mut self) -> Box<dyn Expr> {
+    fn parse_primary_expr(&mut self) -> Expr {
         match self.at().token_type {
             TokenType::Identifier => {
                 let symbol = self.eat().value;
-                Box::new(Identifier { symbol })
+                Expr::Identifier(Identifier { kind: NodeType::Identifier, symbol })
             }
             TokenType::Number => {
                 let value = self.eat().value.parse().unwrap();
-                Box::new(NumericLiteral { value })
+                Expr::NumericLiteral(NumericLiteral { kind: NodeType::NumericLiteral, value })
             }
             TokenType::OpenParen => {
-                self.eat(); // eat the opening paren
-                let value = self.parse_expr();
+                self.eat();
+                let expr = self.parse_expr();
                 self.expect(TokenType::CloseParen);
-                value
+                expr
             }
-            _ => panic!("Unexpected token: {:?}", self.at()),
+            _ => panic!("Unexpected token found during parsing!"),
         }
     }
 }
