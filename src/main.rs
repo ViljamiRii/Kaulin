@@ -37,7 +37,7 @@ fn repl() {
         // Produce AST From source-code
         let tokens = tokenize(&input);
         let program = Parser::new(tokens).produce_ast();
-        let stmt = Stmt::Program(program); // Change this line
+        let stmt = Stmt::Program(program);
 
         let result = evaluate(stmt, &mut env);
         println!("{:?}", result);

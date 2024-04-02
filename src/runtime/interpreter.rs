@@ -26,12 +26,12 @@ fn eval_numeric_binary_expr(lhs: NumberVal, rhs: NumberVal, operator: &str) -> R
 fn eval_binary_expr(binop: BinaryExpr, env: &mut Environment) -> RuntimeVal {
     let lhs = match evaluate(Stmt::Expr(*binop.left), env) {
         RuntimeVal::Number(n) => n,
-        _ => panic!("Expected NumberVal"),
+        _ => return RuntimeVal::Null(NullVal::mk_null()), // Return null if lhs is not a number
     };
 
     let rhs = match evaluate(Stmt::Expr(*binop.right), env) {
         RuntimeVal::Number(n) => n,
-        _ => panic!("Expected NumberVal"),
+        _ => return RuntimeVal::Null(NullVal::mk_null()), // Return null if rhs is not a number
     };
 
     // Only currently support numeric operations
