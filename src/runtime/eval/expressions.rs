@@ -2,7 +2,6 @@ use crate::frontend::ast::*;
 use crate::runtime::environment::*;
 use crate::runtime::interpreter::*;
 use crate::runtime::values::*;
-use std::collections::HashMap;
 
 fn eval_numeric_binary_expr(lhs: NumberVal, rhs: NumberVal, operator: &str) -> RuntimeVal {
     let result = match operator {
@@ -54,7 +53,7 @@ pub fn eval_assignment(assignment_expr: AssignmentExpr, env: &mut Environment) -
 }
 
 pub fn eval_object_expr(obj: ObjectLiteral, env: &mut Environment) -> RuntimeVal {
-    let mut object = ObjectVal::mk_object(HashMap::new());
+    let mut properties = Vec::new();
 
     for property in obj.properties {
         let runtime_val = match property.value {
@@ -62,8 +61,8 @@ pub fn eval_object_expr(obj: ObjectLiteral, env: &mut Environment) -> RuntimeVal
             None => env.lookup_var(&property.key),
         };
 
-        object.properties.insert(property.key, runtime_val);
+        properties.push((property.key, runtime_val));
     }
 
-    RuntimeVal::Object(object)
+    MK_OBJECT(properties)
 }

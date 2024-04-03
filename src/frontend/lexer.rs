@@ -1,4 +1,5 @@
-use std::collections::HashMap;
+use std::iter::Peekable;
+use std::str::Chars;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum TokenType {
@@ -42,12 +43,13 @@ fn is_int(c: char) -> bool {
     c.is_digit(10)
 }
 
-fn get_keywords() -> HashMap<&'static str, TokenType> {
-    let mut keywords = HashMap::new();
-    keywords.insert("olkoon", TokenType::Let);
-    keywords.insert("vakio", TokenType::Const);
-    keywords
+fn get_keywords() -> Vec<(&'static str, TokenType)> {
+    vec![
+        ("olkoon", TokenType::Let),
+        ("vakio", TokenType::Const),
+    ]
 }
+
 
 pub fn tokenize(source_code: &str) -> Vec<Token> {
     let mut tokens = Vec::new();
@@ -100,8 +102,8 @@ pub fn tokenize(source_code: &str) -> Vec<Token> {
                     break;
                 }
             }
-            match keywords.get(ident.as_str()) {
-                Some(token_type) => tokens.push(Token::new(ident.clone(), (*token_type).clone())),
+            match keywords.iter().find(|&&(kw, _)| kw == ident.as_str()) {
+                Some((_, token_type)) => tokens.push(Token::new(ident.clone(), token_type.clone())),
                 None => tokens.push(Token::new(ident, TokenType::Identifier)),
             }
         } else if is_skippable(c) {

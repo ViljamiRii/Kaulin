@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 #[derive(Clone, Debug)]
 pub enum ValueType {
     Null,
@@ -37,7 +35,7 @@ pub struct NumberVal {
 #[derive(Clone, Debug)]
 pub struct ObjectVal {
     pub value_type: ValueType,
-    pub properties: HashMap<String, RuntimeVal>,
+    pub properties: Vec<(String, RuntimeVal)>,
 }
 
 impl NullVal {
@@ -68,7 +66,7 @@ impl NumberVal {
 }
 
 impl ObjectVal {
-    pub fn mk_object(properties: HashMap<String, RuntimeVal>) -> Self {
+    pub fn mk_object(properties: Vec<(String, RuntimeVal)>) -> Self {
         Self {
             value_type: ValueType::Object,
             properties,
@@ -88,6 +86,6 @@ pub fn MK_NUMBER(value: f64) -> RuntimeVal {
     RuntimeVal::Number(NumberVal::mk_number(value))
 }
 
-pub fn MK_OBJECT(properties: HashMap<String, RuntimeVal>) -> RuntimeVal {
+pub fn MK_OBJECT(properties: Vec<(String, RuntimeVal)>) -> RuntimeVal {
     RuntimeVal::Object(ObjectVal::mk_object(properties))
 }
