@@ -5,20 +5,27 @@ pub enum TokenType {
     Number,
     Identifier,
     Let,
+    Const,
     BinaryOperator,
     Equals,
-    OpenParen,
+    Comma,
+    Colon,
+    SemiColon,
+    OpenParen, 
     CloseParen,
+    OpenBrace, 
+    CloseBrace,
     EOF,
 }
 
+#[derive(Debug)]
 pub struct Token {
     pub value: String,
     pub token_type: TokenType,
 }
 
 impl Token {
-    fn new(value: String, token_type: TokenType) -> Self {
+    pub fn new(value: String, token_type: TokenType) -> Self {
         Self { value, token_type }
     }
 }
@@ -35,11 +42,17 @@ fn is_int(c: char) -> bool {
     c.is_digit(10)
 }
 
+fn get_keywords() -> HashMap<&'static str, TokenType> {
+    let mut keywords = HashMap::new();
+    keywords.insert("olkoon", TokenType::Let);
+    keywords.insert("vakio", TokenType::Const);
+    keywords
+}
+
 pub fn tokenize(source_code: &str) -> Vec<Token> {
     let mut tokens = Vec::new();
     let mut chars = source_code.chars().peekable();
-    let mut keywords = HashMap::new();
-    keywords.insert("let", TokenType::Let);
+    let keywords = get_keywords();
 
     while let Some(&c) = chars.peek() {
         if c == '(' {
@@ -48,11 +61,26 @@ pub fn tokenize(source_code: &str) -> Vec<Token> {
         } else if c == ')' {
             chars.next();
             tokens.push(Token::new(")".to_string(), TokenType::CloseParen));
+        } else if c == '{' {
+            chars.next();
+            tokens.push(Token::new("{".to_string(), TokenType::OpenBrace));
+        } else if c == '}' {
+            chars.next();
+            tokens.push(Token::new("}".to_string(), TokenType::CloseBrace));
         } else if c == '+' || c == '-' || c == '*' || c == '/' || c == '%' {
             tokens.push(Token::new(chars.next().unwrap().to_string(), TokenType::BinaryOperator));
         } else if c == '=' {
             chars.next();
             tokens.push(Token::new("=".to_string(), TokenType::Equals));
+        } else if c == ';' {
+            chars.next();
+            tokens.push(Token::new(";".to_string(), TokenType::SemiColon));
+        } else if c == ':' {
+            chars.next();
+            tokens.push(Token::new(":".to_string(), TokenType::Colon));
+        } else if c == ',' {
+            chars.next();
+            tokens.push(Token::new(",".to_string(), TokenType::Comma));
         } else if is_int(c) {
             let mut num = String::new();
             while let Some(&c) = chars.peek() {

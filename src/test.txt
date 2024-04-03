@@ -1,1 +1,10 @@
-olkoon x = 45 * (4 / 3)
+olkoon foo = 45 / 2;
+
+vakio obj = {
+  x: 100,
+  y: 32,
+  foo,
+  complex: {
+    bar: tosi,
+  },
+};

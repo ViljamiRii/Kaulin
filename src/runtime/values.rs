@@ -1,8 +1,11 @@
+use std::collections::HashMap;
+
 #[derive(Clone, Debug)]
 pub enum ValueType {
     Null,
     Number,
     Boolean,
+    Object,
 }
 
 #[derive(Clone, Debug)]
@@ -10,6 +13,7 @@ pub enum RuntimeVal {
     Null(NullVal),
     Bool(BoolVal),
     Number(NumberVal),
+    Object(ObjectVal),
 }
 
 #[derive(Clone, Debug)]
@@ -28,6 +32,12 @@ pub struct BoolVal {
 pub struct NumberVal {
     pub value_type: ValueType,
     pub value: f64,
+}
+
+#[derive(Clone, Debug)]
+pub struct ObjectVal {
+    pub value_type: ValueType,
+    pub properties: HashMap<String, RuntimeVal>,
 }
 
 impl NullVal {
@@ -57,6 +67,15 @@ impl NumberVal {
     }
 }
 
+impl ObjectVal {
+    pub fn mk_object(properties: HashMap<String, RuntimeVal>) -> Self {
+        Self {
+            value_type: ValueType::Object,
+            properties,
+        }
+    }
+}
+
 pub fn MK_BOOL(value: bool) -> RuntimeVal {
     RuntimeVal::Bool(BoolVal::mk_bool(value))
 }
@@ -67,4 +86,8 @@ pub fn MK_NULL() -> RuntimeVal {
 
 pub fn MK_NUMBER(value: f64) -> RuntimeVal {
     RuntimeVal::Number(NumberVal::mk_number(value))
+}
+
+pub fn MK_OBJECT(properties: HashMap<String, RuntimeVal>) -> RuntimeVal {
+    RuntimeVal::Object(ObjectVal::mk_object(properties))
 }
