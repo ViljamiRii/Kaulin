@@ -4,11 +4,11 @@ use crate::runtime::values::RuntimeVal;
 impl fmt::Display for RuntimeVal {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            RuntimeVal::Null(_) => write!(f, "null"),
+            RuntimeVal::Null(_) => write!(f, "{{ \"value\": None, \"type\": \"null\" }}"),
             RuntimeVal::Bool(b) => write!(f, "{{ \"value\": {}, \"type\": \"bool\" }}", b.value),
             RuntimeVal::Number(n) => write!(f, "{{ \"value\": {}, \"type\": \"number\" }}", n.value),
             RuntimeVal::Object(o) => {
-                let mut simple_properties: Vec<_> = o.properties.iter().filter(|(_, v)| matches!(v, RuntimeVal::Number(_) | RuntimeVal::Bool(_))).collect();
+                let mut simple_properties: Vec<_> = o.properties.iter().filter(|(_, v)| matches!(v, RuntimeVal::Number(_) | RuntimeVal::Bool(_) | RuntimeVal::Null(_))).collect();
                 simple_properties.sort_by(|a, b| a.0.cmp(&b.0));
                 let mut complex_properties: Vec<_> = o.properties.iter().filter(|(_, v)| matches!(v, RuntimeVal::Object(_))).collect();
                 complex_properties.sort_by(|a, b| a.0.cmp(&b.0));
