@@ -13,7 +13,7 @@ pub enum TokenType {
     Dot,
     Colon,
     SemiColon,
-    OpenParen, 
+    OpenParen,
     CloseParen,
     OpenBrace, // {
     CloseBrace, // }
@@ -47,12 +47,8 @@ fn is_int(c: char) -> bool {
 }
 
 fn get_keywords() -> Vec<(&'static str, TokenType)> {
-    vec![
-        ("olkoon", TokenType::Let),
-        ("vakio", TokenType::Const),
-    ]
+    vec![("olkoon", TokenType::Let), ("vakio", TokenType::Const)]
 }
-
 
 pub fn tokenize(source_code: &str) -> Vec<Token> {
     let mut tokens = Vec::new();
@@ -78,13 +74,19 @@ pub fn tokenize(source_code: &str) -> Vec<Token> {
         } else if c == ']' {
             chars.next();
             tokens.push(Token::new("]".to_string(), TokenType::CloseBracket));
-        } 
-        // Binary operators
-        else if c == '+' || c == '-' || c == '*' || c == '/' || c == '%' {
+        } else if
+            // Binary operators
+            c == '+' ||
+            c == '-' ||
+            c == '*' ||
+            c == '/' ||
+            c == '%'
+        {
             tokens.push(Token::new(chars.next().unwrap().to_string(), TokenType::BinaryOperator));
-        } 
-        // Conditional & Assignment tokens
-        else if c == '=' {
+        } else if
+            // Conditional & Assignment tokens
+            c == '='
+        {
             chars.next();
             tokens.push(Token::new("=".to_string(), TokenType::Equals));
         } else if c == ';' {

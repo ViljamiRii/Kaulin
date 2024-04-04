@@ -11,7 +11,7 @@ use crate::runtime::environment::*;
 use crate::runtime::interpreter::*;
 use crate::runtime::values::*;
 use crate::display::*;
-use std::io::{self, Write};
+use std::io::{ self, Write };
 use std::fs;
 
 fn run(filename: &str) {
@@ -30,7 +30,6 @@ fn run(filename: &str) {
 fn repl() {
     let global_env = create_global_env();
     let mut env = Environment::new(Some(Box::new(global_env)));
-
 
     // INITIALIZE REPL
     println!("\nViljami Repl 💀 v0.1");

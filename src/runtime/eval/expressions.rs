@@ -19,12 +19,16 @@ fn eval_numeric_binary_expr(lhs: NumberVal, rhs: NumberVal, operator: &str) -> R
 pub fn eval_binary_expr(binop: BinaryExpr, env: &mut Environment) -> RuntimeVal {
     let lhs = match evaluate(Stmt::Expr(*binop.left), env) {
         RuntimeVal::Number(n) => n,
-        _ => return MK_NULL(), // Return null if lhs is not a number
+        _ => {
+            return MK_NULL();
+        } // Return null if lhs is not a number
     };
 
     let rhs = match evaluate(Stmt::Expr(*binop.right), env) {
         RuntimeVal::Number(n) => n,
-        _ => return MK_NULL(), // Return null if rhs is not a number
+        _ => {
+            return MK_NULL();
+        } // Return null if rhs is not a number
     };
 
     // Only currently support numeric operations
@@ -47,7 +51,7 @@ pub fn eval_assignment(assignment_expr: AssignmentExpr, env: &mut Environment) -
             let value = evaluate(Stmt::Expr(*assignment_expr.value.clone()), env);
             env.assign_var(ident.symbol.clone(), value.clone());
             value
-        },
+        }
         _ => panic!("Invalid LHS inside assignment expr {:?}", assignment_expr.assignee),
     }
 }

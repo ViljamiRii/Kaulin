@@ -26,7 +26,12 @@ impl Environment {
         }
     }
 
-    pub fn declare_var(&mut self, varname: String, value: RuntimeVal, constant: bool) -> RuntimeVal {
+    pub fn declare_var(
+        &mut self,
+        varname: String,
+        value: RuntimeVal,
+        constant: bool
+    ) -> RuntimeVal {
         if self.variables.iter().any(|(name, _)| name == &varname) {
             panic!("Cannot declare variable {}. As it already is defined.", varname);
         }
@@ -51,17 +56,21 @@ impl Environment {
         }
         value
     }
-    
+
     pub fn lookup_var(&mut self, varname: &str) -> RuntimeVal {
         let env = self.resolve(varname);
-        env.variables.iter().find(|(name, _)| name == &varname).unwrap().1.clone()
+        env.variables
+            .iter()
+            .find(|(name, _)| name == &varname)
+            .unwrap()
+            .1.clone()
     }
-    
+
     pub fn resolve(&mut self, varname: &str) -> &mut Self {
         if self.variables.iter().any(|(name, _)| name == &varname) {
             return self;
         }
-    
+
         match &mut self.parent {
             Some(parent) => parent.resolve(varname),
             None => panic!("Cannot resolve '{}' as it does not exist.", varname),

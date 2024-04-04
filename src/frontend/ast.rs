@@ -32,7 +32,6 @@ pub enum Stmt {
     NumericLiteral(NumericLiteral),
     Identifier(Identifier),
     BinaryExpr(BinaryExpr),
-    
 }
 
 #[derive(Debug)]
@@ -53,7 +52,7 @@ pub struct VarDeclaration {
 pub enum Expr {
     AssignmentExpr(AssignmentExpr),
     MemberExpr(MemberExpr),
-    CallExpr(CallExpr), 
+    CallExpr(CallExpr),
 
     Property(Property),
     ObjectLiteral(ObjectLiteral),

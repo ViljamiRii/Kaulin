@@ -18,7 +18,7 @@ pub fn evaluate(ast_node: Stmt, env: &mut Environment) -> RuntimeVal {
                 Expr::BinaryExpr(binary_expr) => eval_binary_expr(binary_expr, env),
                 _ => panic!("This AST Node has not yet been setup for interpretation: {:?}", expr),
             }
-        },
+        }
         Stmt::Program(program) => eval_program(program, env),
         _ => panic!("This AST Node has not yet been setup for interpretation: {:?}", ast_node),
     }
