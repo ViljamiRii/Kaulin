@@ -6,6 +6,8 @@ pub enum NodeType {
 
     //Exprerssions
     AssignmentExpr,
+    MemberExpr,
+    CallExpr,
 
     //Literals
     Property,
@@ -22,6 +24,8 @@ pub enum Stmt {
 
     Expr(Expr),
     AssignmentExpr(AssignmentExpr),
+    MemberExpr(MemberExpr),
+    CallExpr(CallExpr),
 
     Property(Property),
     ObjectLiteral(ObjectLiteral),
@@ -47,7 +51,9 @@ pub struct VarDeclaration {
 
 #[derive(Debug, Clone)]
 pub enum Expr {
-    AssignmentExpr(AssignmentExpr), 
+    AssignmentExpr(AssignmentExpr),
+    MemberExpr(MemberExpr),
+    CallExpr(CallExpr), 
 
     Property(Property),
     ObjectLiteral(ObjectLiteral),
@@ -63,6 +69,21 @@ pub struct AssignmentExpr {
     pub kind: NodeType,
     pub assignee: Box<Expr>,
     pub value: Box<Expr>,
+}
+
+#[derive(Debug, Clone)]
+pub struct MemberExpr {
+    pub kind: NodeType,
+    pub object: Box<Expr>,
+    pub property: Box<Expr>,
+    pub computed: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct CallExpr {
+    pub kind: NodeType,
+    pub args: Vec<Expr>,
+    pub caller: Box<Expr>,
 }
 
 #[derive(Debug, Clone)]

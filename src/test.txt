@@ -8,3 +8,6 @@ vakio obj = {
     bar: tosi,
   },
 };
+
+olkoon f = object.complex.bar;
+foo = obj.foo() + 5

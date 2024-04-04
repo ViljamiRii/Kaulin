@@ -182,11 +182,11 @@ impl Parser {
     }
 
     fn parse_multiplicative_expr(&mut self) -> Expr {
-        let mut left = self.parse_primary_expr();
+        let mut left = self.parse_call_member_expr();
     
         while self.at().value == "*" || self.at().value == "/" || self.at().value == "%" {
             let operator = self.eat().value;
-            let right = self.parse_primary_expr();
+            let right = self.parse_call_member_expr();
             left = Expr::BinaryExpr(BinaryExpr {
                 kind: NodeType::BinaryExpr,
                 left: Box::new(left),
@@ -197,6 +197,95 @@ impl Parser {
     
         left
     }
+
+    fn parse_call_member_expr(&mut self) -> Expr {
+        let member = self.parse_member_expression();
+
+        if self.at().token_type == TokenType::OpenParen {
+            return self.parse_call_expr(member);
+        }
+
+        member
+    }
+
+    fn parse_call_expr(&mut self, caller: Expr) -> Expr {
+        let mut call_expr = Expr::CallExpr(CallExpr {
+            kind: NodeType::CallExpr,
+            caller: Box::new(caller),
+            args: self.parse_args(),
+        });
+    
+        if matches!(self.at().token_type, TokenType::OpenParen) {
+            call_expr = self.parse_call_expr(call_expr);
+        }
+    
+        call_expr
+    }
+
+    fn parse_args(&mut self) -> Vec<Expr> {
+        self.expect(TokenType::OpenParen);
+        let args = if matches!(self.at().token_type, TokenType::CloseParen) {
+            Vec::new()
+        } else {
+            self.parse_arguments_list()
+        };
+    
+        self.expect(TokenType::CloseParen);
+        args
+    }
+
+    fn parse_arguments_list(&mut self) -> Vec<Expr> {
+        let mut args = vec![self.parse_assignment_expr()];
+    
+        while matches!(self.at().token_type, TokenType::Comma) {
+            self.eat();
+            args.push(self.parse_assignment_expr());
+        }
+    
+        args
+    }
+
+    fn parse_member_expression(&mut self) -> Expr {
+        let mut object = self.parse_primary_expr();
+    
+        while matches!(self.at().token_type, TokenType::Dot) || matches!(self.at().token_type, TokenType::OpenBracket) {
+            let operator = self.eat();
+            let mut property: Box<Expr>;
+            let mut computed: bool;
+    
+            if operator.token_type == TokenType::Dot {
+                computed = false;
+                property = Box::new(self.parse_primary_expr());
+    
+                match *property {
+                    Expr::Identifier(_) => {},
+                    _ => panic!("Cannot use dot operator without right hand side being an identifier"),
+                }
+            } else {
+                computed = true;
+                property = Box::new(self.parse_expr());
+                self.expect(TokenType::CloseBracket);
+            }
+    
+            object = Expr::MemberExpr(MemberExpr {
+                kind: NodeType::MemberExpr,
+                object: Box::new(object),
+                property,
+                computed,
+            });
+        }
+    
+        object
+    }
+
+    // Order of Precedence
+    // 0. Assignment Expression
+    // 1. Object Expression
+    // 2. Additive Expression
+    // 3. Multiplicative Expression
+    // 4. Call Expression
+    // 5. Member Expression
+    // 6. Primary Expression
 
     fn parse_primary_expr(&mut self) -> Expr {
         match self.at().token_type {

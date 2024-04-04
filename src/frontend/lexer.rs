@@ -10,12 +10,15 @@ pub enum TokenType {
     BinaryOperator,
     Equals,
     Comma,
+    Dot,
     Colon,
     SemiColon,
     OpenParen, 
     CloseParen,
-    OpenBrace, 
-    CloseBrace,
+    OpenBrace, // {
+    CloseBrace, // }
+    OpenBracket, // [
+    CloseBracket, // ]
     EOF,
 }
 
@@ -69,9 +72,19 @@ pub fn tokenize(source_code: &str) -> Vec<Token> {
         } else if c == '}' {
             chars.next();
             tokens.push(Token::new("}".to_string(), TokenType::CloseBrace));
-        } else if c == '+' || c == '-' || c == '*' || c == '/' || c == '%' {
+        } else if c == '[' {
+            chars.next();
+            tokens.push(Token::new("[".to_string(), TokenType::OpenBracket));
+        } else if c == ']' {
+            chars.next();
+            tokens.push(Token::new("]".to_string(), TokenType::CloseBracket));
+        } 
+        // Binary operators
+        else if c == '+' || c == '-' || c == '*' || c == '/' || c == '%' {
             tokens.push(Token::new(chars.next().unwrap().to_string(), TokenType::BinaryOperator));
-        } else if c == '=' {
+        } 
+        // Conditional & Assignment tokens
+        else if c == '=' {
             chars.next();
             tokens.push(Token::new("=".to_string(), TokenType::Equals));
         } else if c == ';' {
@@ -83,6 +96,9 @@ pub fn tokenize(source_code: &str) -> Vec<Token> {
         } else if c == ',' {
             chars.next();
             tokens.push(Token::new(",".to_string(), TokenType::Comma));
+        } else if c == '.' {
+            chars.next();
+            tokens.push(Token::new(".".to_string(), TokenType::Dot));
         } else if is_int(c) {
             let mut num = String::new();
             while let Some(&c) = chars.peek() {
