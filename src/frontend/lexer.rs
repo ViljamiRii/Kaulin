@@ -3,17 +3,33 @@ use std::str::Chars;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum TokenType {
-    Number,
+    Integer,
+    Float,
     Identifier,
+    StringLiteral,
+
+    Equal, // ==
+    NotEqual, // !=
+    LessThan, // <
+    GreaterThan, // >
+    LessThanOrEqual, // <=
+    GreaterThanOrEqual, // >=
+    LogicalAnd,
+    LogicalOr,
     Let,
     Const,
+    Fn,
+    If, //TODO: Implement if statement
+    Else, //TODO: Implement else statement
+    Absolute,
     BinaryOperator,
-    Equals,
+    Assign,
     Comma,
     Dot,
+    Exponent,
     Colon,
     SemiColon,
-    OpenParen, 
+    OpenParen,
     CloseParen,
     OpenBrace, // {
     CloseBrace, // }
@@ -35,24 +51,23 @@ impl Token {
 }
 
 fn is_alpha(c: char) -> bool {
-    c.is_alphabetic()
+    c.is_alphabetic() || c == '_'
 }
 
 fn is_skippable(c: char) -> bool {
     c.is_whitespace()
 }
 
-fn is_int(c: char) -> bool {
-    c.is_digit(10)
+fn is_float_or_int(c: char) -> bool {
+    c.is_digit(10) || c == '.'
 }
 
 fn get_keywords() -> Vec<(&'static str, TokenType)> {
     vec![
-        ("olkoon", TokenType::Let),
-        ("vakio", TokenType::Const),
-    ]
+        ("olkoon", TokenType::Let), 
+        ("vakio", TokenType::Const), 
+        ("funktio", TokenType::Fn)]
 }
-
 
 pub fn tokenize(source_code: &str) -> Vec<Token> {
     let mut tokens = Vec::new();
@@ -78,18 +93,63 @@ pub fn tokenize(source_code: &str) -> Vec<Token> {
         } else if c == ']' {
             chars.next();
             tokens.push(Token::new("]".to_string(), TokenType::CloseBracket));
-        } 
-        // Binary operators
-        else if c == '+' || c == '-' || c == '*' || c == '/' || c == '%' {
-            tokens.push(Token::new(chars.next().unwrap().to_string(), TokenType::BinaryOperator));
-        } 
-        // Conditional & Assignment tokens
-        else if c == '=' {
-            chars.next();
-            tokens.push(Token::new("=".to_string(), TokenType::Equals));
+        } else if c == '+' || c == '-' || c == '*' || c == '/' || c == '%' || c == '&' || c == '|' {
+            let mut operator = chars.next().unwrap().to_string();
+            if (c == '&' && chars.peek() == Some(&'&')) || (c == '|' && chars.peek() == Some(&'|')) {
+                operator.push(chars.next().unwrap());
+            }
+            tokens.push(Token::new(operator, TokenType::BinaryOperator));
         } else if c == ';' {
             chars.next();
             tokens.push(Token::new(";".to_string(), TokenType::SemiColon));
+        } else if c == '=' {
+            chars.next();
+            if chars.peek() == Some(&'=') {
+                chars.next();
+                tokens.push(Token::new("==".to_string(), TokenType::Equal));
+            } else {
+                tokens.push(Token::new("=".to_string(), TokenType::Assign));
+            }
+        } else if c == '!' {
+            chars.next();
+            if chars.peek() == Some(&'=') {
+                chars.next();
+                tokens.push(Token::new("!=".to_string(), TokenType::NotEqual));
+            } else {
+                panic!("Unexpected '!' in source");
+            }
+        } else if c == '<' {
+            chars.next();
+            if chars.peek() == Some(&'=') {
+                chars.next();
+                tokens.push(Token::new("<=".to_string(), TokenType::LessThanOrEqual));
+            } else {
+                tokens.push(Token::new("<".to_string(), TokenType::LessThan));
+            }
+        } else if c == '>' {
+            chars.next();
+            if chars.peek() == Some(&'=') {
+                chars.next();
+                tokens.push(Token::new(">=".to_string(), TokenType::GreaterThanOrEqual));
+            } else {
+                tokens.push(Token::new(">".to_string(), TokenType::GreaterThan));
+            }
+        } else if c == '&' {
+            chars.next();
+            if chars.peek() == Some(&'&') {
+                chars.next();
+                tokens.push(Token::new("&&".to_string(), TokenType::LogicalAnd));
+            } else {
+                panic!("Unexpected '&' in source");
+            }
+        } else if c == '|' {
+            chars.next();
+            if chars.peek() == Some(&'|') {
+                chars.next();
+                tokens.push(Token::new("||".to_string(), TokenType::LogicalOr));
+            } else {
+                panic!("Unexpected '|' in source");
+            }
         } else if c == ':' {
             chars.next();
             tokens.push(Token::new(":".to_string(), TokenType::Colon));
@@ -99,16 +159,40 @@ pub fn tokenize(source_code: &str) -> Vec<Token> {
         } else if c == '.' {
             chars.next();
             tokens.push(Token::new(".".to_string(), TokenType::Dot));
-        } else if is_int(c) {
-            let mut num = String::new();
+        } else if c == '"' || c == '\'' {
+            let quote_type = chars.next().unwrap();
+            let mut string_literal = String::new();
             while let Some(&c) = chars.peek() {
-                if is_int(c) {
+                if c != quote_type {
+                    string_literal.push(chars.next().unwrap());
+                } else {
+                    chars.next();
+                    break;
+                }
+            }
+            tokens.push(Token::new(string_literal, TokenType::StringLiteral));
+        } else if is_float_or_int(c) {
+            let mut num = String::new();
+            let mut has_dot = false;
+            while let Some(&c) = chars.peek() {
+                if c == '.' {
+                    if has_dot {
+                        panic!("Unexpected '.' in number");
+                    } else {
+                        has_dot = true;
+                        num.push(chars.next().unwrap());
+                    }
+                } else if c.is_digit(10) {
                     num.push(chars.next().unwrap());
                 } else {
                     break;
                 }
             }
-            tokens.push(Token::new(num, TokenType::Number));
+            if has_dot {
+                tokens.push(Token::new(num, TokenType::Float));
+            } else {
+                tokens.push(Token::new(num, TokenType::Integer));
+            }
         } else if is_alpha(c) {
             let mut ident = String::new();
             while let Some(&c) = chars.peek() {

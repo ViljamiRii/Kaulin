@@ -1,79 +1,92 @@
 #[derive(Debug, Clone)]
-pub enum NodeType {
-    //Statements
-    Program,
-    VarDeclaration,
-
-    //Exprerssions
-    AssignmentExpr,
-    MemberExpr,
-    CallExpr,
-
-    //Literals
-    Property,
-    ObjectLiteral,
-    NumericLiteral,
-    Identifier,
-    BinaryExpr,
-}
-
-#[derive(Debug)]
 pub enum Stmt {
     Program(Program),
     VarDeclaration(VarDeclaration),
-
+    FunctionDeclaration(FunctionDeclaration),
     Expr(Expr),
-    AssignmentExpr(AssignmentExpr),
-    MemberExpr(MemberExpr),
-    CallExpr(CallExpr),
-
-    Property(Property),
-    ObjectLiteral(ObjectLiteral),
-    NumericLiteral(NumericLiteral),
-    Identifier(Identifier),
-    BinaryExpr(BinaryExpr),
-    
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Program {
-    pub kind: NodeType,
     pub body: Vec<Stmt>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VarDeclaration {
-    pub kind: NodeType,
     pub constant: bool,
     pub identifier: Identifier,
     pub value: Option<Expr>,
 }
 
 #[derive(Debug, Clone)]
+pub struct FunctionDeclaration {
+    pub parameters: Vec<String>,
+    pub name: String,
+    pub body: Vec<Stmt>,
+}
+
+#[derive(Debug, Clone)]
 pub enum Expr {
     AssignmentExpr(AssignmentExpr),
     MemberExpr(MemberExpr),
-    CallExpr(CallExpr), 
-
+    CallExpr(CallExpr),
+    IfExpr(IfExpr),
     Property(Property),
     ObjectLiteral(ObjectLiteral),
+    ArrayLiteral(ArrayLiteral),
     NumericLiteral(NumericLiteral),
+    StringLiteral(StringLiteral),
+    FloatLiteral(FloatLiteral),
     Identifier(Identifier),
     BinaryExpr(BinaryExpr),
+    UnaryExpr(UnaryExpr),
+    LogicalExpr(LogicalExpr),
+}
 
-    Empty,
+#[derive(Debug, Clone, PartialEq)]
+pub enum BinaryOperator {
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+    Exponent,
+    Modulus,
+
+    // TODO: Refactor these to be comparison operators
+    Equal,
+    NotEqual,
+    LessThan,
+    GreaterThan,
+    LessThanOrEqual,
+    GreaterThanOrEqual,
+
+    //TODO: Refactor these to be logical operators
+    And,
+    Or,
+}
+
+#[derive(Debug, Clone)]
+pub struct LogicalExpr {
+    pub left: Box<Expr>,
+    pub right: Box<Expr>,
+    pub operator: BinaryOperator,
 }
 
 #[derive(Debug, Clone)]
 pub struct AssignmentExpr {
-    pub kind: NodeType,
     pub assignee: Box<Expr>,
     pub value: Box<Expr>,
 }
 
 #[derive(Debug, Clone)]
+pub struct IfExpr {
+    pub condition: Box<Expr>,
+    pub then_branch: Vec<Stmt>,
+    pub else_branch: Option<Vec<Stmt>>,
+}
+
+#[derive(Debug, Clone)]
 pub struct MemberExpr {
-    pub kind: NodeType,
     pub object: Box<Expr>,
     pub property: Box<Expr>,
     pub computed: bool,
@@ -81,40 +94,55 @@ pub struct MemberExpr {
 
 #[derive(Debug, Clone)]
 pub struct CallExpr {
-    pub kind: NodeType,
     pub args: Vec<Expr>,
     pub caller: Box<Expr>,
 }
 
 #[derive(Debug, Clone)]
 pub struct NumericLiteral {
-    pub kind: NodeType,
+    pub value: f64,
+}
+
+#[derive(Debug, Clone)]
+pub struct StringLiteral {
+    pub value: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct FloatLiteral {
     pub value: f64,
 }
 
 #[derive(Debug, Clone)]
 pub struct Identifier {
-    pub kind: NodeType,
     pub symbol: String,
 }
 
 #[derive(Debug, Clone)]
 pub struct Property {
-    pub kind: NodeType,
     pub key: String,
     pub value: Option<Box<Expr>>,
 }
 
 #[derive(Debug, Clone)]
 pub struct ObjectLiteral {
-    pub kind: NodeType,
     pub properties: Vec<Property>,
 }
 
 #[derive(Debug, Clone)]
+pub struct ArrayLiteral {
+    pub elements: Vec<Box<Expr>>,
+}
+
+#[derive(Debug, Clone)]
 pub struct BinaryExpr {
-    pub kind: NodeType,
     pub left: Box<Expr>,
     pub right: Box<Expr>,
+    pub operator: BinaryOperator,
+}
+
+#[derive(Debug, Clone)]
+pub struct UnaryExpr {
     pub operator: String,
+    pub operand: Box<Expr>,
 }
