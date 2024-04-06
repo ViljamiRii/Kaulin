@@ -1,20 +1,37 @@
 use crate::runtime::values::*;
+use crate::runtime::native_functions::*;
+use std::rc::Rc;
 
 pub fn create_global_env() -> Environment {
     let mut env = Environment::new(None);
-    //env.declare_var("true".to_string(), MK_BOOL(true), true);
     env.declare_var("tosi".to_string(), MK_BOOL(true), true);
-    //env.declare_var("false".to_string(), MK_BOOL(false), true);
     env.declare_var("epätosi".to_string(), MK_BOOL(false), true);
-    //env.declare_var("null".to_string(), MK_NULL(), true);
     env.declare_var("tyhjä".to_string(), MK_NULL(), true);
+    env.declare_var(
+        "tulosta".to_string(),
+        MK_NATIVE_FN(
+            Rc::new(|args, _scope| {
+                for arg in args {
+                    println!("{:?}", arg);
+                }
+                MK_NULL()
+            })
+        ),
+        true
+    );
+    env.declare_var("aika".to_string(), MK_NATIVE_FN(Rc::new(time_function)), true);
+    env.declare_var("itseisarvo".to_string(), MK_NATIVE_FN(Rc::new(abs_function)), true);
+    env.declare_var("pyöristä".to_string(), MK_NATIVE_FN(Rc::new(round_function)), true);
+    env.declare_var("neliöjuuri".to_string(), MK_NATIVE_FN(Rc::new(sqrt_function)), true);
+    env.declare_var("syöte".to_string(), MK_NATIVE_FN(Rc::new(input_function)), true);
     env
 }
 
+#[derive(Debug, Clone)]
 pub struct Environment {
-    parent: Option<Box<Environment>>,
-    variables: Vec<(String, RuntimeVal)>,
-    constants: Vec<String>,
+    pub parent: Option<Box<Environment>>,
+    pub variables: Vec<(String, RuntimeVal)>,
+    pub constants: Vec<String>,
 }
 
 impl Environment {

@@ -1,0 +1,47 @@
+//Loops
+while() 🔴 toistaiseksi()
+for() 🔴 kunnes()
+
+//Statements
+if() 🔴
+else() 🔴
+fn() 🟢 funktio() 
+
+//Comparison operators
+== 🟢
+!= 🟢
+< 🟢
+> 🟢
+<= 🟢
+>= 🟢
+
+//Logical operators
+&& 🟢
+|| 🟢
+
+//Data structures
+Integer 🟢
+Float 🟢
+String 🟢
+Object/Dictionary 🟢 
+Array 🟢
+Boolean 🟢 tosi/epätosi
+Null 🟢 tyhjä
+
+//Math operations
+** 🟢
+sqrt() 🟢 neliöjuuri()
+absolute() 🟢 itseisarvo()
+round() 🟢 pyöristä()
+
+//Array operations
+maximum() 🔴 maksimi()
+minimum() 🔴 minimi()
+length() 🔴 pituus()
+sort() 🔴 järjestä()
+reverse() 🔴 päinvastainen()
+
+//UI
+input() 🟢 syöte()
+print() 🟢 tulosta()
+time() 🟢 aika()

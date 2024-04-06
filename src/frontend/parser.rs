@@ -39,140 +39,278 @@ impl Parser {
             body.push(self.parse_stmt());
         }
 
-        Program { kind: NodeType::Program, body }
+        Program { body }
+    }
+    
+    fn parse_stmt(&mut self) -> Stmt {
+        let stmt = match self.at().token_type {
+            TokenType::Let => {
+                let stmt = self.parse_var_declaration();
+                self.expect_semicolon();
+                stmt
+            }
+            TokenType::Const => {
+                let stmt = self.parse_var_declaration();
+                self.expect_semicolon();
+                stmt
+            }
+            TokenType::Fn => {
+                let stmt = self.parse_fn_declaration();
+                self.expect_semicolon();
+                stmt
+            }
+            _ => Stmt::Expr(self.parse_expr()),
+        };
+    
+        stmt
     }
 
-    fn parse_stmt(&mut self) -> Stmt {
-        match self.at().token_type {
-            TokenType::Let => self.parse_var_declaration(),
-            TokenType::Const => self.parse_var_declaration(),
-            _ => Stmt::Expr(self.parse_expr()),
+    fn expect_semicolon(&mut self) {
+        match self.expect(TokenType::SemiColon) {
+            Some(_) => (),
+            None => panic!("Expected ';' after statement"),
         }
     }
+    
+    fn parse_fn_declaration(&mut self) -> Stmt {
+        self.eat();
+        let name = match self.expect(TokenType::Identifier) {
+            Some(token) => token.value,
+            None => panic!("Expected function name following fn keyword"),
+        };
 
+        let args = self.parse_args();
+        let mut params: Vec<String> = Vec::new();
+        for arg in args {
+            match arg {
+                Expr::Identifier(identifier) => params.push(identifier.symbol),
+                _ =>
+                    panic!("Inside function declaration expected parameters to be of type string."),
+            }
+        }
+
+        match self.expect(TokenType::OpenBrace) {
+            Some(_) => (),
+            None => panic!("Expected function body following declaration"),
+        }
+        let mut body: Vec<Stmt> = Vec::new();
+
+        while self.not_eof() && self.at().token_type != TokenType::CloseBrace {
+            body.push(self.parse_stmt());
+        }
+
+        match self.expect(TokenType::CloseBrace) {
+            Some(_) => (),
+            None => panic!("Closing brace expected inside function declaration"),
+        }
+
+        Stmt::FunctionDeclaration(FunctionDeclaration {
+            name,
+            parameters: params,
+            body,
+        })
+    }
+
+    // Entry point for parsing an expression
+    // Calls parse_assignment_expr
     fn parse_expr(&mut self) -> Expr {
         self.parse_assignment_expr()
     }
 
-    fn parse_assignment_expr(&mut self) -> Expr {
-        let left = self.parse_object_expr();
-
-        if self.at().token_type == TokenType::Equals {
-            self.eat(); // advance past equals
-            let value = self.parse_assignment_expr();
-            return Expr::AssignmentExpr(AssignmentExpr {
-                value: Box::new(value),
-                assignee: Box::new(left),
-                kind: NodeType::AssignmentExpr,
-            });
-        }
-
-        left
-    }
-
-    fn parse_object_expr(&mut self) -> Expr {
-        if self.at().token_type != TokenType::OpenBrace {
-            return self.parse_additive_expr();
-        }
-
-        self.eat();
-        let mut properties: Vec<Property> = Vec::new();
-
-        while self.not_eof() && self.at().token_type != TokenType::CloseBrace {
-            let key = self.expect(TokenType::Identifier).unwrap().value;
-
-            // Allows shorthand property assignment { key, }
-            if self.at().token_type == TokenType::Comma {
-                self.eat();
-                properties.push(Property {
-                    key,
-                    kind: NodeType::Property,
-                    value: None,
-                });
-                continue;
-            }
-            // Allows shorthand property assignment { key }
-            if self.at().token_type == TokenType::CloseBrace {
-                self.eat();
-                properties.push(Property {
-                    key,
-                    kind: NodeType::Property,
-                    value: None,
-                });
-                continue;
-            }
-            // { key: val }
-            self.expect(TokenType::Colon);
-            let value = self.parse_expr();
-
-            properties.push(Property {
-                key,
-                kind: NodeType::Property,
-                value: Some(Box::new(value)),
-            });
-            if self.at().token_type != TokenType::CloseBrace {
-                self.expect(TokenType::Comma);
-            }
-        }
-
-        self.expect(TokenType::CloseBrace);
-
-        Expr::ObjectLiteral(ObjectLiteral {
-            kind: NodeType::ObjectLiteral,
-            properties,
-        })
-    }
-
+    // Parses variable declarations
+    // Calls parse_expr
     fn parse_var_declaration(&mut self) -> Stmt {
         let is_constant = self.eat().token_type == TokenType::Const;
         let identifier = match self.expect(TokenType::Identifier) {
             Some(token) =>
                 Identifier {
-                    kind: NodeType::Identifier,
                     symbol: token.value,
                 },
             None => panic!("Expected identifier name following let | const keywords."),
         };
 
-        if self.at().token_type == TokenType::SemiColon {
+        if self.at().token_type == TokenType::Assign {
+            self.expect(TokenType::Assign);
+            let value = Some(self.parse_expr());
+
+            Stmt::VarDeclaration(VarDeclaration {
+                identifier: identifier.clone(),
+                constant: is_constant,
+                value,
+            })
+        } else {
             if is_constant {
                 panic!("Must assign value to constant expression. No value provided.");
             } else {
-                self.eat();
-                return Stmt::VarDeclaration(VarDeclaration {
-                    kind: NodeType::VarDeclaration,
+                Stmt::VarDeclaration(VarDeclaration {
                     identifier,
                     constant: false,
                     value: None,
-                });
+                })
+            }
+        }
+    }
+
+    // Parses assignment expressions
+    // Calls parse_object_expr
+    fn parse_assignment_expr(&mut self) -> Expr {
+        let left = self.parse_object_expr();
+
+        if self.at().token_type == TokenType::Assign {
+            self.eat(); // advance past equals
+            let value = self.parse_assignment_expr();
+            return Expr::AssignmentExpr(AssignmentExpr {
+                value: Box::new(value),
+                assignee: Box::new(left),
+            });
+        }
+
+        left
+    }
+
+    // Parses array expressions
+    // Calls parse_object_expr
+    fn parse_array_expr(&mut self) -> Expr {
+        if self.at().token_type != TokenType::OpenBracket {
+            return self.parse_object_expr();
+        }
+
+        self.eat(); // advance past open bracket.
+        let mut elements: Vec<Box<Expr>> = Vec::new();
+
+        while self.not_eof() && self.at().token_type != TokenType::CloseBracket {
+            let element = self.parse_expr();
+            elements.push(Box::new(element));
+
+            if self.at().token_type != TokenType::CloseBracket {
+                match self.expect(TokenType::Comma) {
+                    Some(_) => (),
+                    None => panic!("Expected comma or closing bracket following array element"),
+                };
             }
         }
 
-        self.expect(TokenType::Equals);
-        let value = Some(self.parse_expr());
-
-        if self.at().token_type == TokenType::SemiColon {
-            self.eat();
-        } else {
-            panic!("Expected ';' after variable declaration");
+        match self.expect(TokenType::CloseBracket) {
+            Some(_) => (),
+            None => panic!("Array literal missing closing bracket."),
         }
 
-        Stmt::VarDeclaration(VarDeclaration {
-            kind: NodeType::VarDeclaration,
-            identifier: identifier.clone(),
-            constant: is_constant,
-            value,
-        })
+        Expr::ArrayLiteral(ArrayLiteral { elements })
     }
 
+    // Parses object expressions
+    // Calls parse_comparison_expr
+    fn parse_object_expr(&mut self) -> Expr {
+        if self.at().token_type != TokenType::OpenBrace {
+            return self.parse_comparison_expr();
+        }
+
+        self.eat(); // advance past open brace.
+        let mut properties: Vec<Property> = Vec::new();
+
+        while self.not_eof() && self.at().token_type != TokenType::CloseBrace {
+            let key = match self.expect(TokenType::Identifier) {
+                Some(token) => token.value,
+                None => panic!("Object literal key expected"),
+            };
+
+            // Allows shorthand key: pair -> { key, }
+            if self.at().token_type == TokenType::Comma {
+                self.eat(); // advance past comma
+                properties.push(Property { key, value: None });
+                continue;
+            } else if
+                // Allows shorthand key: pair -> { key }
+                self.at().token_type == TokenType::CloseBrace
+            {
+                properties.push(Property { key, value: None });
+                continue;
+            }
+
+            // { key: val }
+            match self.expect(TokenType::Colon) {
+                Some(_) => (),
+                None => panic!("Missing colon following identifier in ObjectExpr"),
+            }
+            let value = self.parse_expr();
+
+            properties.push(Property { value: Some(Box::new(value)), key });
+            if self.at().token_type != TokenType::CloseBrace {
+                match self.expect(TokenType::Comma) {
+                    Some(_) => (),
+                    None => panic!("Expected comma or closing bracket following property"),
+                };
+            }
+        }
+
+        match self.expect(TokenType::CloseBrace) {
+            Some(_) => (),
+            None => panic!("Object literal missing closing brace."),
+        }
+        Expr::ObjectLiteral(ObjectLiteral { properties })
+    }
+
+    // Parses comparison expressions
+    // Calls parse_logical_expr
+    fn parse_comparison_expr(&mut self) -> Expr {
+        let mut left = self.parse_logical_expr();
+
+        while self.at().value == "==" || self.at().value == "!=" || self.at().value == "<" || self.at().value == ">" || self.at().value == "<=" || self.at().value == ">=" {
+            let operator = match self.eat().value.as_str() {
+                "==" => BinaryOperator::Equal,
+                "!=" => BinaryOperator::NotEqual,
+                "<" => BinaryOperator::LessThan,
+                ">" => BinaryOperator::GreaterThan,
+                "<=" => BinaryOperator::LessThanOrEqual,
+                ">=" => BinaryOperator::GreaterThanOrEqual,
+                _ => panic!("Unexpected operator"),
+            };
+            let right = self.parse_logical_expr();
+            left = Expr::BinaryExpr(BinaryExpr {
+                left: Box::new(left),
+                right: Box::new(right),
+                operator,
+            });
+        }
+
+        left
+    }
+
+    // Parses logical expressions
+    // Calls parse_additive_expr
+    fn parse_logical_expr(&mut self) -> Expr {
+        let mut left = self.parse_additive_expr();
+    
+        while self.at().value == "&&" || self.at().value == "||" {
+            let operator = match self.eat().value.as_str() {
+                "&&" => BinaryOperator::And,
+                "||" => BinaryOperator::Or,
+                _ => panic!("Unexpected operator"),
+            };
+            let right = self.parse_additive_expr();
+            left = Expr::BinaryExpr(BinaryExpr {
+                left: Box::new(left),
+                right: Box::new(right),
+                operator,
+            });
+        }
+    
+        left
+    }
+
+    // Parses additive expressions
+    // Calls parse_multiplicative_expr
     fn parse_additive_expr(&mut self) -> Expr {
         let mut left = self.parse_multiplicative_expr();
 
         while self.at().value == "+" || self.at().value == "-" {
-            let operator = self.eat().value;
+            let operator = match self.eat().value.as_str() {
+                "+" => BinaryOperator::Add,
+                "-" => BinaryOperator::Subtract,
+                _ => panic!("Unexpected operator"),
+            };
             let right = self.parse_multiplicative_expr();
             left = Expr::BinaryExpr(BinaryExpr {
-                kind: NodeType::BinaryExpr,
                 left: Box::new(left),
                 right: Box::new(right),
                 operator,
@@ -182,23 +320,64 @@ impl Parser {
         left
     }
 
+    // Parses multiplicative expressions
+    // Calls parse_exponentiation_expr
     fn parse_multiplicative_expr(&mut self) -> Expr {
-        let mut left = self.parse_call_member_expr();
-
+        let mut left = self.parse_exponentiation_expr();
+    
         while self.at().value == "*" || self.at().value == "/" || self.at().value == "%" {
-            let operator = self.eat().value;
-            let right = self.parse_call_member_expr();
+            let operator = match self.eat().value.as_str() {
+                "*" => BinaryOperator::Multiply,
+                "/" => BinaryOperator::Divide,
+                "%" => BinaryOperator::Modulus,
+                _ => panic!("Unexpected operator"),
+            };
+            let right = self.parse_exponentiation_expr();
             left = Expr::BinaryExpr(BinaryExpr {
-                kind: NodeType::BinaryExpr,
                 left: Box::new(left),
                 right: Box::new(right),
                 operator,
             });
         }
-
+    
         left
     }
 
+    // Parses exponentiation expressions
+    // Calls parse_unary_expr
+    fn parse_exponentiation_expr(&mut self) -> Expr {
+        let mut left = self.parse_unary_expr();
+    
+        while self.at().value == "**" {
+            self.eat(); // advance past **
+            let right = self.parse_unary_expr();
+            left = Expr::BinaryExpr(BinaryExpr {
+                left: Box::new(left),
+                right: Box::new(right),
+                operator: BinaryOperator::Exponent,
+            });
+        }
+    
+        left
+    }
+
+    // Parses unary expressions
+    // Calls parse_call_member_expr
+    fn parse_unary_expr(&mut self) -> Expr {
+        if self.at().value == "-" || self.at().value == "!" {
+            let operator = self.eat().value;
+            let operand = self.parse_unary_expr();
+            return Expr::UnaryExpr(UnaryExpr {
+                operator,
+                operand: Box::new(operand),
+            });
+        }
+
+        self.parse_call_member_expr()
+    }
+
+    // Parses call member expressions
+    // Calls parse_member_expression
     fn parse_call_member_expr(&mut self) -> Expr {
         let member = self.parse_member_expression();
 
@@ -209,20 +388,31 @@ impl Parser {
         member
     }
 
+    // Parses call expressions
+    // Calls parse_arguments_list
     fn parse_call_expr(&mut self, caller: Expr) -> Expr {
+        self.expect(TokenType::OpenParen);
+        let args = if matches!(self.at().token_type, TokenType::CloseParen) {
+            Vec::new()
+        } else {
+            self.parse_arguments_list()
+        };
+        self.expect(TokenType::CloseParen);
+
         let mut call_expr = Expr::CallExpr(CallExpr {
-            kind: NodeType::CallExpr,
             caller: Box::new(caller),
-            args: self.parse_args(),
+            args,
         });
 
-        if matches!(self.at().token_type, TokenType::OpenParen) {
+        while matches!(self.at().token_type, TokenType::OpenParen) {
             call_expr = self.parse_call_expr(call_expr);
         }
 
         call_expr
     }
 
+    // Parses arguments
+    // Calls parse_arguments_list
     fn parse_args(&mut self) -> Vec<Expr> {
         self.expect(TokenType::OpenParen);
         let args = if matches!(self.at().token_type, TokenType::CloseParen) {
@@ -235,6 +425,8 @@ impl Parser {
         args
     }
 
+    // Parses arguments list
+    // Calls parse_assignment_expr
     fn parse_arguments_list(&mut self) -> Vec<Expr> {
         let mut args = vec![self.parse_assignment_expr()];
 
@@ -246,6 +438,8 @@ impl Parser {
         args
     }
 
+    // Parses member expressions
+    // Calls parse_primary_expr
     fn parse_member_expression(&mut self) -> Expr {
         let mut object = self.parse_primary_expr();
 
@@ -261,12 +455,10 @@ impl Parser {
                 computed = false;
                 property = Box::new(self.parse_primary_expr());
 
-                match *property {
-                    Expr::Identifier(_) => {}
-                    _ =>
-                        panic!(
-                            "Cannot use dot operator without right hand side being an identifier"
-                        ),
+                if let Expr::Identifier(_) = *property {
+                    // property is an identifier
+                } else {
+                    panic!("Expected identifier following dot operator");
                 }
             } else {
                 computed = true;
@@ -275,7 +467,6 @@ impl Parser {
             }
 
             object = Expr::MemberExpr(MemberExpr {
-                kind: NodeType::MemberExpr,
                 object: Box::new(object),
                 property,
                 computed,
@@ -285,32 +476,37 @@ impl Parser {
         object
     }
 
-    // Order of Precedence
-    // 0. Assignment Expression
-    // 1. Object Expression
-    // 2. Additive Expression
-    // 3. Multiplicative Expression
-    // 4. Call Expression
-    // 5. Member Expression
-    // 6. Primary Expression
-
+    // Parses primary expressions
+    // Calls parse_array_expr
     fn parse_primary_expr(&mut self) -> Expr {
         match self.at().token_type {
             TokenType::Identifier => {
                 let symbol = self.eat().value;
-                Expr::Identifier(Identifier { kind: NodeType::Identifier, symbol })
+                Expr::Identifier(Identifier { symbol })
             }
-            TokenType::Number => {
+            TokenType::Integer => {
                 let value = self.eat().value.parse().unwrap();
-                Expr::NumericLiteral(NumericLiteral { kind: NodeType::NumericLiteral, value })
+                Expr::NumericLiteral(NumericLiteral { value })
             }
+            TokenType::Float => {
+                let value = self.eat().value.parse().unwrap();
+                Expr::FloatLiteral(FloatLiteral { value })
+            }
+            TokenType::OpenBracket => { self.parse_array_expr() }
             TokenType::OpenParen => {
                 self.eat();
                 let expr = self.parse_expr();
                 self.expect(TokenType::CloseParen);
                 expr
             }
+            TokenType::StringLiteral => {
+                let value = self.eat().value;
+                Expr::StringLiteral(StringLiteral { value })
+            }
+
             _ => panic!("Unexpected token found during parsing! {:?}", self.at()),
         }
     }
 }
+
+// NOTE NEVER DELETE THE ORDER OF PRECEDENCE COMMENTS

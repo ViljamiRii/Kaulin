@@ -1,13 +1,3 @@
-olkoon foo = 45 / 2;
-
-vakio obj = {
-  x: 100,
-  y: 32,
-  foo,
-  complex: {
-    bar: tosi,
-  },
-};
-
-olkoon f = object.complex.bar;
-foo = obj.foo() + 5
+olkoon x = 1 == 2;
+olkoon y = 2 == 2;
+x || y

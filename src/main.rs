@@ -2,7 +2,6 @@
 
 mod runtime;
 mod frontend;
-mod display;
 
 use crate::frontend::ast::*;
 use crate::frontend::lexer::*;
@@ -10,7 +9,6 @@ use crate::frontend::parser::*;
 use crate::runtime::environment::*;
 use crate::runtime::interpreter::*;
 use crate::runtime::values::*;
-use crate::display::*;
 use std::io::{ self, Write };
 use std::fs;
 
@@ -24,7 +22,7 @@ fn run(filename: &str) {
     let stmt = Stmt::Program(program);
 
     let result = evaluate(stmt, &mut env);
-    println!("{}", result);
+    println!("{:?}", result);
 }
 
 fn repl() {
@@ -53,7 +51,8 @@ fn repl() {
         let stmt = Stmt::Program(program);
 
         let result = evaluate(stmt, &mut env);
-        println!("{}", result);
+        println!("{:?}", result);
+
     }
 }
 

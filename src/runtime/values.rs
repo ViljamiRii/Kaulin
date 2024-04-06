@@ -1,91 +1,73 @@
-#[derive(Clone, Debug)]
-pub enum ValueType {
-    Null,
-    Number,
-    Boolean,
-    Object,
-}
+use std::rc::Rc;
+use std::cell::RefCell;
+use crate::frontend::ast::*;
+use crate::runtime::environment::*;
 
 #[derive(Clone, Debug)]
 pub enum RuntimeVal {
-    Null(NullVal),
-    Bool(BoolVal),
-    Number(NumberVal),
-    Object(ObjectVal),
+    Null,
+    Bool(bool),
+    Number(f64),
+    String(String),
+    Object(Vec<(String, RuntimeVal)>),
+    Array(Vec<RuntimeVal>),
+    NativeFunction(NativeFunction),
+    Function(Function),
 }
 
-#[derive(Clone, Debug)]
-pub struct NullVal {
-    pub value_type: ValueType,
-    pub value: Option<()>,
-}
+pub struct NativeFunction(Rc<dyn Fn(Vec<RuntimeVal>, Vec<(String, RuntimeVal)>) -> RuntimeVal>);
 
-#[derive(Clone, Debug)]
-pub struct BoolVal {
-    pub value_type: ValueType,
-    pub value: bool,
-}
-
-#[derive(Clone, Debug)]
-pub struct NumberVal {
-    pub value_type: ValueType,
-    pub value: f64,
-}
-
-#[derive(Clone, Debug)]
-pub struct ObjectVal {
-    pub value_type: ValueType,
-    pub properties: Vec<(String, RuntimeVal)>,
-}
-
-impl NullVal {
-    pub fn mk_null() -> Self {
-        Self {
-            value_type: ValueType::Null,
-            value: None,
-        }
+impl NativeFunction {
+    pub fn get_fn(&self) -> Rc<dyn Fn(Vec<RuntimeVal>, Vec<(String, RuntimeVal)>) -> RuntimeVal> {
+        Rc::clone(&self.0)
     }
 }
 
-impl BoolVal {
-    pub fn mk_bool(b: bool) -> Self {
-        Self {
-            value_type: ValueType::Boolean,
-            value: b,
-        }
+impl std::fmt::Debug for NativeFunction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "NativeFunction")
     }
 }
 
-impl NumberVal {
-    pub fn mk_number(n: f64) -> Self {
-        Self {
-            value_type: ValueType::Number,
-            value: n,
-        }
+impl Clone for NativeFunction {
+    fn clone(&self) -> Self {
+        NativeFunction(Rc::clone(&self.0))
     }
 }
 
-impl ObjectVal {
-    pub fn mk_object(properties: Vec<(String, RuntimeVal)>) -> Self {
-        Self {
-            value_type: ValueType::Object,
-            properties,
-        }
-    }
+#[derive(Clone, Debug)]
+pub struct Function {
+    pub parameters: Vec<String>,
+    pub declaration_env: Rc<RefCell<Environment>>,
+    pub body: Vec<Stmt>,
 }
 
 pub fn MK_BOOL(value: bool) -> RuntimeVal {
-    RuntimeVal::Bool(BoolVal::mk_bool(value))
+    RuntimeVal::Bool(value)
 }
 
 pub fn MK_NULL() -> RuntimeVal {
-    RuntimeVal::Null(NullVal::mk_null())
+    RuntimeVal::Null
 }
 
 pub fn MK_NUMBER(value: f64) -> RuntimeVal {
-    RuntimeVal::Number(NumberVal::mk_number(value))
+    RuntimeVal::Number(value)
 }
 
 pub fn MK_OBJECT(properties: Vec<(String, RuntimeVal)>) -> RuntimeVal {
-    RuntimeVal::Object(ObjectVal::mk_object(properties))
+    RuntimeVal::Object(properties)
+}
+
+pub fn MK_NATIVE_FN(
+    call: Rc<dyn Fn(Vec<RuntimeVal>, Vec<(String, RuntimeVal)>) -> RuntimeVal>
+) -> RuntimeVal {
+    RuntimeVal::NativeFunction(NativeFunction(call))
+}
+
+pub fn MK_STRING(value: String) -> RuntimeVal {
+    RuntimeVal::String(value)
+}
+
+pub fn MK_ARRAY(elements: Vec<RuntimeVal>) -> RuntimeVal {
+    RuntimeVal::Array(elements)
 }
