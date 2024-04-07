@@ -8,6 +8,7 @@ pub struct Parser {
 
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
+        //println!("{:?}", tokens);
         Self { tokens }
     }
 
@@ -21,6 +22,22 @@ impl Parser {
 
     fn eat(&mut self) -> Token {
         self.tokens.remove(0)
+    }
+
+    fn parse_block(&mut self) -> Block {
+        let mut statements = Vec::new();
+    
+        self.expect(TokenType::OpenBrace);
+    
+        while self.at().token_type != TokenType::CloseBrace {
+            statements.push(self.parse_stmt());
+        }
+    
+        if self.not_eof() {
+            self.expect(TokenType::CloseBrace);
+        }
+    
+        Block { statements }
     }
 
     fn expect(&mut self, token_type: TokenType) -> Option<Token> {
@@ -44,6 +61,29 @@ impl Parser {
     
     fn parse_stmt(&mut self) -> Stmt {
         let stmt = match self.at().token_type {
+            TokenType::If => {
+                self.eat();
+                let expr = self.parse_if_else_expr();
+                Stmt::Expr(expr)
+            }
+            TokenType::Else => {
+                self.eat();
+                let expr = self.parse_if_else_expr();
+                Stmt::Expr(expr)
+            }
+            TokenType::While => {
+                self.eat();
+                let condition = self.parse_expr();
+                let body = self.parse_block();
+                Stmt::WhileLoop(WhileLoop {
+                    condition: Box::new(condition),
+                    body,
+                })
+            }
+            TokenType::For => {
+                self.eat();
+                self.parse_for_loop()
+            }
             TokenType::Let => {
                 let stmt = self.parse_var_declaration();
                 self.expect_semicolon();
@@ -111,10 +151,62 @@ impl Parser {
         })
     }
 
+    fn parse_if_else_expr(&mut self) -> Expr {
+
+        let condition = Box::new(self.parse_expr());
+    
+        let if_branch = self.parse_block();
+    
+        let else_branch = if self.at().token_type == TokenType::Else {
+            self.eat(); 
+            Some(self.parse_block())
+        } else {
+            None
+        };
+    
+        Expr::IfElseExpr(IfElseExpr { condition, if_branch, else_branch })
+    }
+
+    fn parse_for_loop(&mut self) -> Stmt {
+        self.eat();
+        self.expect(TokenType::OpenParen);
+        let identifier = match self.expect(TokenType::Identifier) {
+            Some(token) => token.value,
+            None => panic!("Expected identifier name following 'olkoon' keyword."),
+        };
+        self.expect(TokenType::Assign);
+        let initialization = Box::new(self.parse_expr());
+        self.expect(TokenType::SemiColon);
+        let condition = Box::new(self.parse_expr());
+        self.expect(TokenType::SemiColon);
+        let increment = Box::new(self.parse_expr());
+        self.expect(TokenType::CloseParen);
+        let body = self.parse_block(); 
+        Stmt::ForLoop(ForLoop {
+            initializer: Box::new(Stmt::VarDeclaration(VarDeclaration {
+                identifier: Identifier { symbol: identifier },
+                constant: false,
+                value: Some(*initialization),
+            })),
+            condition: condition,
+            increment: increment,
+            body: body,
+        })
+    }
+
     // Entry point for parsing an expression
     // Calls parse_assignment_expr
     fn parse_expr(&mut self) -> Expr {
-        self.parse_assignment_expr()
+        // Skip over any comment tokens
+        while self.at().token_type == TokenType::SingleLineComment || self.at().token_type == TokenType::MultiLineComment {
+            self.eat();
+        }
+    
+        match self.at().token_type {
+            TokenType::If | TokenType::Else => self.parse_if_else_expr(),
+            TokenType::OpenBrace => self.parse_object_expr(),
+            _ => self.parse_assignment_expr(),
+        }
     }
 
     // Parses variable declarations
@@ -155,7 +247,7 @@ impl Parser {
     // Calls parse_object_expr
     fn parse_assignment_expr(&mut self) -> Expr {
         let left = self.parse_object_expr();
-
+    
         if self.at().token_type == TokenType::Assign {
             self.eat(); // advance past equals
             let value = self.parse_assignment_expr();
@@ -164,7 +256,7 @@ impl Parser {
                 assignee: Box::new(left),
             });
         }
-
+    
         left
     }
 
@@ -302,11 +394,37 @@ impl Parser {
     // Calls parse_multiplicative_expr
     fn parse_additive_expr(&mut self) -> Expr {
         let mut left = self.parse_multiplicative_expr();
-
-        while self.at().value == "+" || self.at().value == "-" {
+    
+        while self.at().value == "+" || self.at().value == "-" || self.at().value == "+=" || self.at().value == "-=" {
             let operator = match self.eat().value.as_str() {
                 "+" => BinaryOperator::Add,
                 "-" => BinaryOperator::Subtract,
+                "+=" => {
+                    let right = self.parse_multiplicative_expr();
+                    let left_clone = left.clone();
+                    let new_value = Expr::BinaryExpr(BinaryExpr {
+                        left: Box::new(left_clone),
+                        right: Box::new(right),
+                        operator: BinaryOperator::Add,
+                    });
+                    return Expr::AssignmentExpr(AssignmentExpr {
+                        assignee: Box::new(left),
+                        value: Box::new(new_value),
+                    });
+                }
+                "-=" => {
+                    let right = self.parse_multiplicative_expr();
+                    let left_clone = left.clone();
+                    let new_value = Expr::BinaryExpr(BinaryExpr {
+                        left: Box::new(left_clone),
+                        right: Box::new(right),
+                        operator: BinaryOperator::Subtract,
+                    });
+                    return Expr::AssignmentExpr(AssignmentExpr {
+                        assignee: Box::new(left),
+                        value: Box::new(new_value),
+                    });
+                }
                 _ => panic!("Unexpected operator"),
             };
             let right = self.parse_multiplicative_expr();
@@ -316,7 +434,7 @@ impl Parser {
                 operator,
             });
         }
-
+    
         left
     }
 

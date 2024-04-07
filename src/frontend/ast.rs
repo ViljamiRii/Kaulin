@@ -4,6 +4,9 @@ pub enum Stmt {
     VarDeclaration(VarDeclaration),
     FunctionDeclaration(FunctionDeclaration),
     Expr(Expr),
+    WhileLoop(WhileLoop),
+    ForLoop(ForLoop)
+
 }
 
 #[derive(Debug, Clone)]
@@ -26,11 +29,26 @@ pub struct FunctionDeclaration {
 }
 
 #[derive(Debug, Clone)]
+pub struct WhileLoop {
+    pub condition: Box<Expr>,
+    pub body: Block,
+}
+
+#[derive(Debug, Clone)]
+pub struct ForLoop {
+    pub initializer: Box<Stmt>,
+    pub condition: Box<Expr>,
+    pub increment: Box<Expr>,
+    pub body: Block,
+}
+
+
+#[derive(Debug, Clone)]
 pub enum Expr {
     AssignmentExpr(AssignmentExpr),
     MemberExpr(MemberExpr),
     CallExpr(CallExpr),
-    IfExpr(IfExpr),
+    IfElseExpr(IfElseExpr),
     Property(Property),
     ObjectLiteral(ObjectLiteral),
     ArrayLiteral(ArrayLiteral),
@@ -51,6 +69,8 @@ pub enum BinaryOperator {
     Divide,
     Exponent,
     Modulus,
+    AddEqual,
+    SubtractEqual,
 
     // TODO: Refactor these to be comparison operators
     Equal,
@@ -79,10 +99,15 @@ pub struct AssignmentExpr {
 }
 
 #[derive(Debug, Clone)]
-pub struct IfExpr {
+pub struct IfElseExpr {
     pub condition: Box<Expr>,
-    pub then_branch: Vec<Stmt>,
-    pub else_branch: Option<Vec<Stmt>>,
+    pub if_branch: Block,
+    pub else_branch: Option<Block>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Block {
+    pub statements: Vec<Stmt>,
 }
 
 #[derive(Debug, Clone)]

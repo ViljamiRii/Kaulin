@@ -3,6 +3,7 @@ use crate::runtime::environment::*;
 use crate::runtime::interpreter::*;
 use crate::runtime::values::*;
 
+
 use std::rc::Rc;
 use std::cell::RefCell;
 
@@ -37,4 +38,33 @@ pub fn eval_function_declaration(
     let function_val = RuntimeVal::Function(function);
 
     env.declare_var(declaration.name, function_val, true)
+}
+
+pub fn eval_while_loop(while_loop: WhileLoop, env: &mut Environment) -> RuntimeVal {
+    let mut result = RuntimeVal::Null;
+    while eval_expr(*while_loop.condition.clone(), env).is_truthy() {
+        result = eval_block(while_loop.body.clone(), env);
+    }
+    result
+}
+
+pub fn eval_for_loop(for_loop: ForLoop, env: &mut Environment) -> RuntimeVal {
+    let ForLoop { initializer, condition, increment, body } = for_loop;
+    evaluate(*initializer, env); // call eval_stmt instead of eval_expr
+    while match eval_expr(*condition.clone(), env) {
+        RuntimeVal::Bool(b) => b,
+        _ => false,
+    } {
+        eval_block(body.clone(), env);
+        eval_expr(*increment.clone(), env);
+    }
+    MK_NULL()
+}
+
+fn eval_block(block: Block, env: &mut Environment) -> RuntimeVal {
+    let mut result = RuntimeVal::Null;
+    for stmt in block.statements {
+        result = evaluate(stmt, env);
+    }
+    result
 }

@@ -15,6 +15,21 @@ pub enum RuntimeVal {
     Function(Function),
 }
 
+impl RuntimeVal {
+    pub fn is_truthy(&self) -> bool {
+        match self {
+            RuntimeVal::Null => false,
+            RuntimeVal::Bool(b) => *b,
+            RuntimeVal::Number(n) => *n != 0.0,
+            RuntimeVal::String(s) => !s.is_empty(),
+            RuntimeVal::Object(_) => true, // objects are always truthy
+            RuntimeVal::Array(a) => !a.is_empty(), // arrays are truthy if they are not empty
+            RuntimeVal::NativeFunction(_) => true, // functions are always truthy
+            RuntimeVal::Function(_) => true, // functions are always truthy
+        }
+    }
+}
+
 pub struct NativeFunction(Rc<dyn Fn(Vec<RuntimeVal>, Vec<(String, RuntimeVal)>) -> RuntimeVal>);
 
 impl NativeFunction {

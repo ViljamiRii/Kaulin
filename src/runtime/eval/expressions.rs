@@ -2,6 +2,7 @@ use crate::frontend::ast::*;
 use crate::runtime::environment::*;
 use crate::runtime::interpreter::*;
 use crate::runtime::values::*;
+use crate::runtime::eval::statements::*;
 use std::cell::RefCell;
 
 fn eval_numeric_binary_expr(lhs: f64, rhs: f64, operator: &BinaryOperator) -> RuntimeVal {
@@ -15,28 +16,20 @@ fn eval_numeric_binary_expr(lhs: f64, rhs: f64, operator: &BinaryOperator) -> Ru
             } else {
                 MK_NUMBER(lhs / rhs)
             }
-        },
+        }
         BinaryOperator::Modulus => {
             if rhs == 0.0 {
                 panic!("Division by zero error");
             } else {
                 MK_NUMBER(lhs % rhs)
             }
-        },
+        }
         BinaryOperator::And => {
-            if lhs != 0.0 && rhs != 0.0 {
-                MK_BOOL(true)
-            } else {
-                MK_BOOL(false)
-            }
-        },
+            if lhs != 0.0 && rhs != 0.0 { MK_BOOL(true) } else { MK_BOOL(false) }
+        }
         BinaryOperator::Or => {
-            if lhs != 0.0 || rhs != 0.0 {
-                MK_BOOL(true)
-            } else {
-                MK_BOOL(false)
-            }
-        },
+            if lhs != 0.0 || rhs != 0.0 { MK_BOOL(true) } else { MK_BOOL(false) }
+        }
         BinaryOperator::Exponent => MK_NUMBER(lhs.powf(rhs)),
         BinaryOperator::Equal => MK_BOOL(lhs == rhs),
         BinaryOperator::NotEqual => MK_BOOL(lhs != rhs),
@@ -58,10 +51,15 @@ pub fn eval_binary_expr(binop: BinaryExpr, env: &mut Environment) -> RuntimeVal 
             let rhs = *n2;
             eval_numeric_binary_expr(lhs, rhs, &binop.operator)
         }
-        (RuntimeVal::String(s1), RuntimeVal::String(s2)) if binop.operator == BinaryOperator::Add => {
+        (RuntimeVal::String(s1), RuntimeVal::String(s2)) if
+            binop.operator == BinaryOperator::Add
+        => {
             RuntimeVal::String(s1.clone() + s2)
         }
-        (RuntimeVal::Bool(b1), RuntimeVal::Bool(b2)) if binop.operator == BinaryOperator::And || binop.operator == BinaryOperator::Or => {
+        (RuntimeVal::Bool(b1), RuntimeVal::Bool(b2)) if
+            binop.operator == BinaryOperator::And ||
+            binop.operator == BinaryOperator::Or
+        => {
             match binop.operator {
                 BinaryOperator::And => RuntimeVal::Bool(*b1 && *b2),
                 BinaryOperator::Or => RuntimeVal::Bool(*b1 || *b2),
@@ -124,7 +122,9 @@ pub fn eval_call_expr(expr: CallExpr, env: &mut Environment) -> RuntimeVal {
             result
         }
         RuntimeVal::Function(func) => {
-            let mut scope = Environment::new(Some(Box::new(RefCell::borrow(&*func.declaration_env).clone())));
+            let mut scope = Environment::new(
+                Some(Box::new(RefCell::borrow(&*func.declaration_env).clone()))
+            );
 
             // Create the variables for the parameters list
             for (i, varname) in func.parameters.iter().enumerate() {
@@ -154,14 +154,12 @@ pub fn eval_member_expr(expr: MemberExpr, env: &mut Environment) -> RuntimeVal {
 
     match object {
         RuntimeVal::Object(obj) => {
-            obj.iter().find_map(|(key, val)| {
-                if key == &property {
-                    Some(val.clone())
-                } else {
-                    None
-                }
-            }).unwrap_or_else(|| panic!("Property '{}' does not exist on object", property))
-        },
+            obj.iter()
+                .find_map(|(key, val)| {
+                    if key == &property { Some(val.clone()) } else { None }
+                })
+                .unwrap_or_else(|| panic!("Property '{}' does not exist on object", property))
+        }
         _ => panic!("Only objects have properties"),
     }
 }
@@ -175,14 +173,41 @@ pub fn eval_unary_expr(unary_expr: UnaryExpr, env: &mut Environment) -> RuntimeV
             } else {
                 panic!("Operand must be a number for unary '-' operator");
             }
-        },
+        }
         "!" => {
             if let RuntimeVal::Bool(b) = operand {
                 MK_BOOL(!b)
             } else {
                 panic!("Operand must be a boolean for unary '!' operator");
             }
-        },
+        }
         _ => panic!("Unexpected unary operator"),
+    }
+}
+
+pub fn eval_if_else_expr(if_else_expr: IfElseExpr, env: &mut Environment) -> RuntimeVal {
+    let condition = evaluate(Stmt::Expr(*if_else_expr.condition), env);
+    match condition {
+        RuntimeVal::Bool(b) => {
+            if b {
+                let mut result = MK_NULL();
+                for stmt in if_else_expr.if_branch.statements {
+                    result = evaluate(stmt, env);
+                }
+                result
+            } else {
+                match if_else_expr.else_branch {
+                    Some(else_branch) => {
+                        let mut result = MK_NULL();
+                        for stmt in else_branch.statements {
+                            result = evaluate(stmt, env);
+                        }
+                        result
+                    }
+                    None => MK_NULL(),
+                }
+            }
+        }
+        _ => panic!("Condition in if-else expression must evaluate to a boolean"),
     }
 }
