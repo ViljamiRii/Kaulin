@@ -1,3 +1,12 @@
-olkoon x = 1 == 2;
-olkoon y = 2 == 2;
-x || y
+toista( olkoon i = 0; i < 5; i += 1 ) {
+    tulosta("foo")
+    }
+
+olkoon x = 10;
+
+tulosta(x)
+kun( 1 < x ) {
+    tulosta(x)
+    tulosta("bar")
+    x -= 1
+}

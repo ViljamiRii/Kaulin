@@ -7,23 +7,18 @@ pub fn create_global_env() -> Environment {
     env.declare_var("tosi".to_string(), MK_BOOL(true), true);
     env.declare_var("epätosi".to_string(), MK_BOOL(false), true);
     env.declare_var("tyhjä".to_string(), MK_NULL(), true);
-    env.declare_var(
-        "tulosta".to_string(),
-        MK_NATIVE_FN(
-            Rc::new(|args, _scope| {
-                for arg in args {
-                    println!("{:?}", arg);
-                }
-                MK_NULL()
-            })
-        ),
-        true
-    );
+    env.declare_var("tulosta".to_string(), MK_NATIVE_FN(Rc::new(print_function)), true);
     env.declare_var("aika".to_string(), MK_NATIVE_FN(Rc::new(time_function)), true);
     env.declare_var("itseisarvo".to_string(), MK_NATIVE_FN(Rc::new(abs_function)), true);
     env.declare_var("pyöristä".to_string(), MK_NATIVE_FN(Rc::new(round_function)), true);
     env.declare_var("neliöjuuri".to_string(), MK_NATIVE_FN(Rc::new(sqrt_function)), true);
     env.declare_var("syöte".to_string(), MK_NATIVE_FN(Rc::new(input_function)), true);
+    env.declare_var("satunnainen".to_string(), MK_NATIVE_FN(Rc::new(random_function)), true);
+    env.declare_var("maksimi".to_string(), MK_NATIVE_FN(Rc::new(max_function)), true);
+    env.declare_var("minimi".to_string(), MK_NATIVE_FN(Rc::new(min_function)), true);
+    env.declare_var("pituus".to_string(), MK_NATIVE_FN(Rc::new(length_function)), true);
+    env.declare_var("järjestä".to_string(), MK_NATIVE_FN(Rc::new(sort_function)), true);
+    env.declare_var("käänteinen".to_string(), MK_NATIVE_FN(Rc::new(reverse_function)), true);
     env
 }
 

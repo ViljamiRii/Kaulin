@@ -1,10 +1,10 @@
 //Loops
-while() 🔴 toistaiseksi()
-for() 🔴 kunnes()
+while() 🟢 kun()
+for() 🟢 toista()
 
 //Statements
-if() 🔴
-else() 🔴
+if() 🟢 jos()
+else() 🟢 muuten()
 fn() 🟢 funktio() 
 
 //Comparison operators
@@ -33,15 +33,53 @@ Null 🟢 tyhjä
 sqrt() 🟢 neliöjuuri()
 absolute() 🟢 itseisarvo()
 round() 🟢 pyöristä()
+random() 🟢 satunnainen()
++= 🟢
+-= 🟢
 
 //Array operations
-maximum() 🔴 maksimi()
-minimum() 🔴 minimi()
-length() 🔴 pituus()
-sort() 🔴 järjestä()
-reverse() 🔴 päinvastainen()
+maximum() 🟢 maksimi()
+minimum() 🟢 minimi()
+length() 🟢 pituus()
+sort() 🟢 järjestä()
+reverse() 🟢 käänteinen()
 
 //UI
 input() 🟢 syöte()
 print() 🟢 tulosta()
 time() 🟢 aika()
+formatting 🟢 %{}
+comments 🟢
+
+// Exception Handling
+try() 🔴 kokeile()
+catch() 🔴 nappaa()
+finally() 🔴 viimeinkin()
+throw() 🔴 heitä()
+
+// Type Conversion Functions
+int() 🔴 kokonaisluku()
+float() 🔴 liukuluku()
+str() 🔴 merkkijono()
+
+// File I/O Operations
+readFile() 🔴 lue_tiedosto()
+writeFile() 🔴 kirjoita_tiedosto()
+
+// Date and Time Functions
+getCurrentDate() 🔴 hae_nykyinen_päivämäärä()
+getCurrentTime() 🔴 hae_nykyinen_aika()
+formatDate() 🔴 muotoile_päivämäärä()
+
+// String Manipulation Functions
+substring() 🔴 alimerkkijono()
+concatenate() 🔴 yhdistä()
+find() 🔴 etsi()
+replace() 🔴 korvaa()
+
+// Regular Expressions
+match() 🔴 täsmää()
+search() 🔴 etsi()
+replace() 🔴 korvaa()
+split() 🔴 jaa()
+findAll() 🔴 löydä_kaikki()

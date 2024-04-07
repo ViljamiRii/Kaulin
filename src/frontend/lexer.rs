@@ -8,19 +8,25 @@ pub enum TokenType {
     Identifier,
     StringLiteral,
 
+    PlusEqual, // +=
+    MinusEqual, // -=
     Equal, // ==
     NotEqual, // !=
     LessThan, // <
     GreaterThan, // >
     LessThanOrEqual, // <=
     GreaterThanOrEqual, // >=
+    SingleLineComment, // //
+    MultiLineComment, // /* */
     LogicalAnd,
     LogicalOr,
     Let,
     Const,
     Fn,
-    If, //TODO: Implement if statement
-    Else, //TODO: Implement else statement
+    If,
+    Else,
+    While,
+    For,
     Absolute,
     BinaryOperator,
     Assign,
@@ -66,7 +72,12 @@ fn get_keywords() -> Vec<(&'static str, TokenType)> {
     vec![
         ("olkoon", TokenType::Let), 
         ("vakio", TokenType::Const), 
-        ("funktio", TokenType::Fn)]
+        ("funktio", TokenType::Fn),
+        ("jos", TokenType::If),
+        ("muuten", TokenType::Else),
+        ("kun", TokenType::While),
+        ("toista", TokenType::For),
+        ]
 }
 
 pub fn tokenize(source_code: &str) -> Vec<Token> {
@@ -94,11 +105,49 @@ pub fn tokenize(source_code: &str) -> Vec<Token> {
             chars.next();
             tokens.push(Token::new("]".to_string(), TokenType::CloseBracket));
         } else if c == '+' || c == '-' || c == '*' || c == '/' || c == '%' || c == '&' || c == '|' {
+            if c == '/' {
+                if let Some(&next_c) = chars.peek() {
+                    if next_c == '/' {
+                        // Single-line comment
+                        chars.next(); // consume the second '/'
+                        while let Some(&c) = chars.peek() {
+                            if c != '\n' {
+                                chars.next(); // consume the comment character
+                            } else {
+                                break;
+                            }
+                        }
+                        continue; // skip to the next character
+                    } else if next_c == '*' {
+                        // Multi-line comment
+                        chars.next(); // consume the '*'
+                        let mut prev_c = ' ';
+                        while let Some(&c) = chars.peek() {
+                            if prev_c == '*' && c == '/' {
+                                chars.next(); // consume the '/'
+                                break;
+                            } else {
+                                prev_c = chars.next().unwrap();
+                            }
+                        }
+                        continue; // skip to the next character
+                    }
+                }
+            }
+        
             let mut operator = chars.next().unwrap().to_string();
             if (c == '&' && chars.peek() == Some(&'&')) || (c == '|' && chars.peek() == Some(&'|')) {
                 operator.push(chars.next().unwrap());
+            } else if (c == '+' || c == '-') && chars.peek() == Some(&'=') {
+                operator.push(chars.next().unwrap());
             }
-            tokens.push(Token::new(operator, TokenType::BinaryOperator));
+        
+            let token_type = match operator.as_str() {
+                "+=" => TokenType::PlusEqual,
+                "-=" => TokenType::MinusEqual,
+                _ => TokenType::BinaryOperator,
+            };
+            tokens.push(Token::new(operator, token_type));
         } else if c == ';' {
             chars.next();
             tokens.push(Token::new(";".to_string(), TokenType::SemiColon));
@@ -213,6 +262,7 @@ pub fn tokenize(source_code: &str) -> Vec<Token> {
         }
     }
 
+    //println!("{:?}", tokens);
     tokens.push(Token::new("EndOfFile".to_string(), TokenType::EOF));
     tokens
 }
