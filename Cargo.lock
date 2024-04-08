@@ -3,6 +3,14 @@
 version = 3
 
 [[package]]
+name = "Kaulin"
+version = "1.0.0"
+dependencies = [
+ "rand",
+ "strfmt",
+]
+
+[[package]]
 name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -17,14 +25,6 @@ dependencies = [
  "cfg-if",
  "libc",
  "wasi",
-]
-
-[[package]]
-name = "language_test"
-version = "0.1.0"
-dependencies = [
- "rand",
- "strfmt",
 ]
 
 [[package]]

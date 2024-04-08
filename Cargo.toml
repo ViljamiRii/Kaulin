@@ -1,8 +1,12 @@
 [package]
-name = "language_test"
-version = "0.1.0"
+name = "Kaulin"
+version = "1.0.0"
 edition = "2021"
 
 [dependencies]
 rand = "0.8.4"
 strfmt = "0.2.1"
+
+[profile.dev]
+opt-level = 3
+debug = false

@@ -4,7 +4,7 @@ use crate::runtime::environment::*;
 use crate::runtime::eval::statements::*;
 use crate::runtime::eval::expressions::*;
 
-pub fn evaluate(ast_node: Stmt, env: &mut Environment) -> RuntimeVal {
+pub fn evaluate(ast_node: &Stmt, env: &mut Environment) -> RuntimeVal {
     match ast_node {
         Stmt::VarDeclaration(var_declaration) => eval_var_declaration(var_declaration, env),
         Stmt::FunctionDeclaration(function_declaration) => eval_function_declaration(function_declaration, env),
@@ -12,14 +12,14 @@ pub fn evaluate(ast_node: Stmt, env: &mut Environment) -> RuntimeVal {
         Stmt::ForLoop(for_loop) => eval_for_loop(for_loop, env),
         Stmt::Expr(expr) => eval_expr(expr, env),
         Stmt::Program(program) => eval_program(program, env),
-        _ => panic!("This AST Node has not yet been setup for interpretation: {:?}", ast_node),
+        _ => panic!("Tätä AST-solmua ei ole vielä määritetty tulkittavaksi: {:?}", ast_node),
     }
 }
 
-pub fn eval_expr(expr: Expr, env: &mut Environment) -> RuntimeVal {
+pub fn eval_expr(expr: &Expr, env: &mut Environment) -> RuntimeVal {
     match expr {
         Expr::NumericLiteral(numeric_literal) => { MK_NUMBER(numeric_literal.value) },
-        Expr::StringLiteral(string_literal) => { MK_STRING(string_literal.value) },
+        Expr::StringLiteral(string_literal) => eval_string_literal(string_literal, env, &[]),
         Expr::FloatLiteral(float_literal) => { MK_NUMBER(float_literal.value) },
         Expr::Identifier(identifier) => eval_identifier(identifier, env),
         Expr::ObjectLiteral(object_literal) => eval_object_expr(object_literal, env),
@@ -30,6 +30,6 @@ pub fn eval_expr(expr: Expr, env: &mut Environment) -> RuntimeVal {
         Expr::MemberExpr(member_expr) => eval_member_expr(member_expr, env),
         Expr::UnaryExpr(unary_expr) => eval_unary_expr(unary_expr, env),
         Expr::IfElseExpr(if_else_expr) => eval_if_else_expr(if_else_expr, env),
-        _ => panic!("This AST Node has not yet been setup for interpretation: {:?}", expr),
+        _ => panic!("Tätä AST-solmua ei ole vielä määritetty tulkittavaksi: {:?}", expr),
     }
 }

@@ -7,6 +7,7 @@ use crate::runtime::environment::*;
 pub enum RuntimeVal {
     Null,
     Bool(bool),
+    Integer(i64),
     Number(f64),
     String(String),
     Object(Vec<(String, RuntimeVal)>),
@@ -20,12 +21,13 @@ impl RuntimeVal {
         match self {
             RuntimeVal::Null => false,
             RuntimeVal::Bool(b) => *b,
+            RuntimeVal::Integer(i) => *i != 0,
             RuntimeVal::Number(n) => *n != 0.0,
             RuntimeVal::String(s) => !s.is_empty(),
-            RuntimeVal::Object(_) => true, // objects are always truthy
-            RuntimeVal::Array(a) => !a.is_empty(), // arrays are truthy if they are not empty
-            RuntimeVal::NativeFunction(_) => true, // functions are always truthy
-            RuntimeVal::Function(_) => true, // functions are always truthy
+            RuntimeVal::Object(_) => true,
+            RuntimeVal::Array(a) => !a.is_empty(),
+            RuntimeVal::NativeFunction(_) => true,
+            RuntimeVal::Function(_) => true,
         }
     }
 }
@@ -63,6 +65,10 @@ pub fn MK_BOOL(value: bool) -> RuntimeVal {
 
 pub fn MK_NULL() -> RuntimeVal {
     RuntimeVal::Null
+}
+
+pub fn MK_INTEGER(value: i64) -> RuntimeVal {
+    RuntimeVal::Integer(value)
 }
 
 pub fn MK_NUMBER(value: f64) -> RuntimeVal {

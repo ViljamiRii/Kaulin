@@ -1,0 +1,5 @@
+funktio hei_maailma() {
+    tulosta("Hei maailma!")
+}
+
+hei_maailma()

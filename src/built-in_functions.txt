@@ -47,7 +47,7 @@ reverse() 🟢 käänteinen()
 //UI
 input() 🟢 syöte()
 print() 🟢 tulosta()
-time() 🟢 aika()
+time() 🟢 aika()/sekunnit()
 formatting 🟢 %{}
 comments 🟢
 
@@ -58,9 +58,9 @@ finally() 🔴 viimeinkin()
 throw() 🔴 heitä()
 
 // Type Conversion Functions
-int() 🔴 kokonaisluku()
-float() 🔴 liukuluku()
-str() 🔴 merkkijono()
+int() 🟢 kluku()
+float() 🟢 lluku()
+str() 🟢 mjono()
 
 // File I/O Operations
 readFile() 🔴 lue_tiedosto()
@@ -83,3 +83,22 @@ search() 🔴 etsi()
 replace() 🔴 korvaa()
 split() 🔴 jaa()
 findAll() 🔴 löydä_kaikki()
+
+// Window Management
+createWindow() 🔴 luo_ikkuna()
+destroyWindow() 🔴 tuhoa_ikkuna()
+setWindowTitle() 🔴 aseta_ikkunan_otsikko()
+
+// Rendering
+clearScreen() 🔴 tyhjennä_näyttö()
+drawRect() 🔴 piirrä_suorakulmio()
+drawCircle() 🔴 piirrä_ympyrä()
+drawLine() 🔴 piirrä_viiva()
+updateScreen() 🔴 päivitä_näyttö()
+
+// User Input
+getKeyState() 🔴 hae_näppäimen_tila()
+getMouseState() 🔴 hae_hiiren_tila()
+
+// Timing
+delay() 🔴 viive()
