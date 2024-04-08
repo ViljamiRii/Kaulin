@@ -45,8 +45,9 @@ $ ~/Build/Kaulin main.ka
 >Example code:
 ```rust
 //Kommentit toimivat kirjoittamalla // riville.
-/* Kieli myös tukee monen rivin
-   kommennteja koirjoittamalla sen tällä tavalla.
+/*
+Kieli myös tukee monen rivin
+kommentteja kirjoittamalla kommentin näin.
 */
 
 funktio laske_miljoonaan() {
