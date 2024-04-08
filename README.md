@@ -21,7 +21,7 @@ Jonkin näköinen dokumentaatio on tulossa kunhan kerkeän.
 ## Asennus
 Itselläni on käytössä MacOS, joten asennus muille käyttöjärjestelmille ei vielä ole tiedossa. Päivitän tiedot samantien asennukseen kunhan saan käsiini windows ja linux laitteen.
 > ## Installation
-> I'm using MacOS mysel so the installation on other operating systems is still not clear to me. I will update the information as soon as I get my hands on a windows and a linux device.
+> I'm using MacOS myself so the installation on other operating systems is still not clear to me. I will update the information as soon as I get my hands on a windows and a linux device.
 
 ### MacOS
 1. Lataa [uusin versio](https://github.com/ViljamiRii/Kaulin/releases/tag/Kaulin) ohjelmasta.
@@ -48,10 +48,6 @@ $ ~/Build/Kaulin main.ka
 /* Kieli myös tukee monen rivin
    kommennteja koirjoittamalla sen tällä tavalla.
 */
-
-laske_miljoonaan()
-
-Kesto: 16 ms
 
 funktio laske_miljoonaan() {
     olkoon aloitus_aika = aika();
@@ -87,6 +83,17 @@ Kesto: 16 ms
 ```
 Tästä voi huomata, että kieli on todella huonosti optimoitu, eikä sitä kannata käyttää raskasta laskemista varten. Python on noin 23 kertaa nopeampi.
 > As we can see from this example, the language is poorly optimized and should not be used for heavy calculations. Python is about 23 times faster.
+
+# Syntax korostus
+>Syntax highighting
+
+Kielelle on luotu syntax korostus Visual Studio Codea varten. Voit lisätä syntax korostuksen lataamalla [Github Repository](https://github.com/ViljamiRii/Kaulin/archive/refs/heads/master.zip)n.
+Lataamisen jälkeen mene Kaulin-master tiedoston terminaalilla ja käytä komento:
+>I have implemented simple syntax highlighting for Visual Studio Code. You can add syntax highlighting by downloading the [Github Repository](https://github.com/ViljamiRii/Kaulin/archive/refs/heads/master.zip)
+>After you have downloaded the repository, change directory to Kaulin-master on your terminal and use the command: 
+```
+$ cp -r kaulin-syntax ~/.vscode/extensions
+```
 
 # Credits
 - Thanks to [Tyler Laceby](https://github.com/tlaceby) for helping me with the [guide to interpreters](https://github.com/tlaceby/guide-to-interpreters-series).
