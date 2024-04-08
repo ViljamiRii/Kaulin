@@ -18,9 +18,9 @@ Jonkin näköinen dokumentaatio on tulossa kunhan kerkeän.
 > The language is in no way complete and will probably never be. I am the only developer working on this language and I'm doing it in my free time next to school. The goal of this project was to be an educational experience for me and it has served it's purpose.
 > A documentation of some kind is coming along when I have time.
 
-## Asennus
+# Asennus
 Itselläni on käytössä MacOS, joten asennus muille käyttöjärjestelmille ei vielä ole tiedossa. Päivitän tiedot samantien asennukseen kunhan saan käsiini windows ja linux laitteen.
-> ## Installation
+> # Installation
 > I'm using MacOS myself so the installation on other operating systems is still not clear to me. I will update the information as soon as I get my hands on a windows and a linux device.
 
 ### MacOS
