@@ -1,4 +1,4 @@
-use core::panic;
+use std::panic;
 use crate::frontend::lexer::*;
 use crate::frontend::ast::*;
 
