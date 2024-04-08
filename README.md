@@ -39,7 +39,7 @@ $ ~/Build/Kaulin main.ka
 >$ ~/Build/Kaulin main.ka
 >```
 >NOTE! This is in the assumption that you have the build file under /Users/***current_user***/Build                                                              
->3. You can also run the Kaulib executable if you only want to use Repl.
+>3. You can also run the Kaulin executable if you only want to use Repl.
 
 ### Esimerkki koodi:
 >Example code:
