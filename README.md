@@ -89,7 +89,7 @@ Tästä voi huomata, että kieli on todella huonosti optimoitu, eikä sitä kann
 
 Kielelle on luotu syntax korostus Visual Studio Codea varten. Voit lisätä syntax korostuksen lataamalla [Github Repository](https://github.com/ViljamiRii/Kaulin/archive/refs/heads/master.zip)n.
 Lataamisen jälkeen mene Kaulin-master tiedoston terminaalilla ja käytä komento:
->I have implemented simple syntax highlighting for Visual Studio Code. You can add syntax highlighting by downloading the [Github Repository](https://github.com/ViljamiRii/Kaulin/archive/refs/heads/master.zip)
+>I have implemented simple syntax highlighting for Visual Studio Code. You can add syntax highlighting by downloading the [Github Repository](https://github.com/ViljamiRii/Kaulin/archive/refs/heads/master.zip).
 >After you have downloaded the repository, change directory to Kaulin-master on your terminal and use the command: 
 ```
 $ cp -r kaulin-syntax ~/.vscode/extensions
