@@ -21,7 +21,7 @@ Jonkin näköinen dokumentaatio on tulossa kunhan kerkeän.
 ## Asennus
 Itselläni on käytössä MacOS, joten asennus muille käyttöjärjestelmille ei vielä ole tiedossa. Päivitän tiedot samantien asennukseen kunhan saan käsiini windows ja linux laitteen.
 > ## Installation
-> I'm using MacOS mysel so the installaton on other operating systems is still not clear to me. I will update the information as soon as I get my hands on a windows and a linux device.
+> I'm using MacOS mysel so the installation on other operating systems is still not clear to me. I will update the information as soon as I get my hands on a windows and a linux device.
 
 ### MacOS
 1. Lataa [uusin versio](https://github.com/ViljamiRii/Kaulin/releases/tag/Kaulin) ohjelmasta.
