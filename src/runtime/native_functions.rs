@@ -2,34 +2,49 @@ use std::time::SystemTime;
 use std::rc::Rc;
 use std::f64;
 use std::io::{ self, Write };
+use std::convert::TryInto;
 use rand::Rng;
 use strfmt::strfmt;
 use crate::runtime::values::*;
 
 pub fn time_function(_args: Vec<RuntimeVal>, _scope: Vec<(String, RuntimeVal)>) -> RuntimeVal {
     let now = SystemTime::now();
-    MK_NUMBER(now.duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs_f64())
+    let duration_since_epoch = now.duration_since(SystemTime::UNIX_EPOCH).unwrap();
+    let millis = duration_since_epoch.as_millis();
+    MK_INTEGER(millis as i64)
+}
+
+pub fn millis_to_seconds_function(args: Vec<RuntimeVal>, _scope: Vec<(String, RuntimeVal)>) -> RuntimeVal {
+    match args.get(0) {
+        Some(RuntimeVal::Integer(n)) => {
+            let seconds = *n / 1000;
+            MK_INTEGER(seconds)
+        },
+        _ => panic!("sekunnit-funktio odottaa kokonaislukua (millisekuntti) argumenttina"),
+    }
 }
 
 pub fn abs_function(args: Vec<RuntimeVal>, _scope: Vec<(String, RuntimeVal)>) -> RuntimeVal {
     match args.get(0) {
         Some(RuntimeVal::Number(n)) => MK_NUMBER(n.abs()),
-        _ => panic!("abs() expects a number as an argument"),
+        Some(RuntimeVal::Integer(i)) => MK_INTEGER(i.abs()),
+        _ => panic!("itseisarvo-funktio odottaa numeroa argumenttina"),
     }
 }
 
 pub fn round_function(args: Vec<RuntimeVal>, _scope: Vec<(String, RuntimeVal)>) -> RuntimeVal {
     if args.len() > 2 {
-        panic!("round function takes at most two arguments");
+        panic!("pyöristä-funktio ottaa enintään kaksi argumenttia");
     }
     let number = match args.get(0) {
         Some(RuntimeVal::Number(n)) => *n,
-        _ => panic!("round function takes a number as the first argument"),
+        Some(RuntimeVal::Integer(i)) => *i as f64,
+        _ => panic!("pyöristä-funktio ottaa luvun ensimmäisenä argumenttina"),
     };
     let ndigits = if args.len() == 2 {
         match args.get(1) {
             Some(RuntimeVal::Number(n)) => *n as i32,
-            _ => panic!("round function takes an integer as the second argument"),
+            _ => panic!("pyöristä-funktio ottaa kokonaisluvun toiseksi argumentiksi"),
         }
     } else {
         0
@@ -44,14 +59,15 @@ pub fn round_function(args: Vec<RuntimeVal>, _scope: Vec<(String, RuntimeVal)>) 
 
 pub fn sqrt_function(args: Vec<RuntimeVal>, _scope: Vec<(String, RuntimeVal)>) -> RuntimeVal {
     if args.len() != 1 {
-        panic!("neliöjuuri function takes exactly one argument");
+        panic!("neliöjuuri-funktio ottaa täsmälleen yhden argumentin");
     }
     let number = match args.get(0) {
         Some(RuntimeVal::Number(n)) => *n,
-        _ => panic!("neliöjuuri function takes a number as an argument"),
+        Some(RuntimeVal::Integer(i)) => *i as f64,
+        _ => panic!("neliöjuuri-funktio ottaa luvun argumenttina"),
     };
     if number < 0.0 {
-        panic!("neliöjuuri function cannot take a negative number as an argument");
+        panic!("neliöjuuri-funktio ei voi ottaa negatiivista lukua argumenttina");
     }
     let result = number.sqrt();
     MK_NUMBER(result)
@@ -59,10 +75,10 @@ pub fn sqrt_function(args: Vec<RuntimeVal>, _scope: Vec<(String, RuntimeVal)>) -
 
 pub fn input_function(args: Vec<RuntimeVal>, _scope: Vec<(String, RuntimeVal)>) -> RuntimeVal {
     if !args.is_empty() {
-        panic!("input function does not take any arguments");
+        panic!("syöttötoiminto ei ota argumentteja");
     }
     let mut input = String::new();
-    io::stdin().read_line(&mut input).expect("Failed to read line");
+    io::stdin().read_line(&mut input).expect("Rivin lukeminen epäonnistui");
     if let Some('\n') = input.chars().next_back() {
         input.pop();
     }
@@ -74,15 +90,17 @@ pub fn input_function(args: Vec<RuntimeVal>, _scope: Vec<(String, RuntimeVal)>) 
 
 pub fn random_function(args: Vec<RuntimeVal>, _scope: Vec<(String, RuntimeVal)>) -> RuntimeVal {
     if args.len() < 2 || args.len() > 3 {
-        panic!("random function takes two or three arguments");
+        panic!("satunnainen-funktio ottaa kaksi tai kolme argumenttia");
     }
     let min = match args.get(0) {
         Some(RuntimeVal::Number(n)) => *n,
-        _ => panic!("random function takes a number as the first argument"),
+        Some(RuntimeVal::Integer(i)) => *i as f64,
+        _ => panic!("satunnainen-funktio ottaa luvun ensimmäiseksi argumentiksi"),
     };
     let max = match args.get(1) {
         Some(RuntimeVal::Number(n)) => *n,
-        _ => panic!("random function takes a number as the second argument"),
+        Some(RuntimeVal::Integer(i)) => *i as f64,
+        _ => panic!("satunnainen-funktio ottaa luvun toiseksi argumentiksi"),
     };
     let mut rng = rand::thread_rng();
     let result = if args.len() == 3 {
@@ -92,7 +110,7 @@ pub fn random_function(args: Vec<RuntimeVal>, _scope: Vec<(String, RuntimeVal)>)
                 rng.gen_range(min.floor() as i64..max.ceil() as i64) as f64,
             _ =>
                 panic!(
-                    "random function's third argument must be either 'kokonaisluku' or 'liukuluku'"
+                    "satunnainen-funktion kolmannen argumentin on oltava joko 'kluku' tai 'lluku'"
                 ),
         }
     } else {
@@ -102,85 +120,104 @@ pub fn random_function(args: Vec<RuntimeVal>, _scope: Vec<(String, RuntimeVal)>)
 }
 
 pub fn print_function(args: Vec<RuntimeVal>, _scope: Vec<(String, RuntimeVal)>) -> RuntimeVal {
-    let format_args = args
-        .iter()
+    let mut args_iter = args.iter();
+
+    let format_args = args_iter
+        .next()
         .map(|arg| match arg {
-            RuntimeVal::Number(n) => n.to_string(),
-            RuntimeVal::String(s) => s.clone(),
-            RuntimeVal::Object(o) => format!("{:?}", o),
-            RuntimeVal::Array(a) => format!("{:?}", a),
-            RuntimeVal::Number(i) => i.to_string(),
-            RuntimeVal::Bool(b) => b.to_string(),
-            RuntimeVal::Null => "null".to_string(),
-            RuntimeVal::Function(f) => format!("{:?}", f),
-            _ => panic!("print function takes only numbers, strings, objects, arrays, integers, floats, booleans, nulls, or functions as arguments"),
+            RuntimeVal::String(s) => {
+                let parts: Vec<&str> = s.split("%{}").collect();
+                let mut result = parts[0].to_string();
+                for (part, arg) in parts[1..].iter().zip(&args[1..]) {
+                    result.push_str(&arg.to_string());
+                    result.push_str(part);
+                }
+                result
+            },
+            _ => arg.to_string(), // Convert non-string arguments into strings
         })
-        .collect::<Vec<String>>();
-    let output = format_args.join(" ");
-    println!("{}", output);
+        .unwrap_or_else(|| String::new());
+
+    println!("{}", format_args);
     MK_NULL()
 }
 
 pub fn max_function(args: Vec<RuntimeVal>, _: Vec<(String, RuntimeVal)>) -> RuntimeVal {
     let numbers = match &args[0] {
         RuntimeVal::Array(arr) => arr,
-        _ => panic!("max function expects an array of numbers as argument"),
+        _ => panic!("maksimi-funktio odottaa numero joukkoa argumenttina"),
     };
 
     if numbers.is_empty() {
-        panic!("max function expects at least one argument");
+        panic!("maksimi-funktio odottaa vähintään yhtä argumenttia");
     }
 
     let mut max_val = match &numbers[0] {
-        RuntimeVal::Number(num) => num,
-        _ => panic!("max function expects only numbers in the array"),
+        RuntimeVal::Number(num) => *num,
+        RuntimeVal::Integer(i) => *i as f64,
+        _ => panic!("maksimi-funktio odottaa vain numeroita taulukossa"),
     };
 
     for val in &numbers[1..] {
-        if let RuntimeVal::Number(num) = val {
-            if num > max_val {
-                max_val = num;
-            }
-        } else {
-            panic!("max function expects only numbers in the array");
+        match val {
+            RuntimeVal::Number(num) => {
+                if *num > max_val {
+                    max_val = *num;
+                }
+            },
+            RuntimeVal::Integer(i) => {
+                let val = *i as f64;
+                if val > max_val {
+                    max_val = val;
+                }
+            },
+            _ => panic!("maksimi-funktio odottaa vain numeroita taulukossa"),
         }
     }
 
-    RuntimeVal::Number(*max_val)
+    RuntimeVal::Number(max_val)
 }
 
 pub fn min_function(args: Vec<RuntimeVal>, _: Vec<(String, RuntimeVal)>) -> RuntimeVal {
     let numbers = match &args[0] {
         RuntimeVal::Array(arr) => arr,
-        _ => panic!("min function expects an array of numbers as argument"),
+        _ => panic!("minimi-funktio odottaa numero joukkoa argumenttina"),
     };
 
     if numbers.is_empty() {
-        panic!("min function expects at least one argument");
+        panic!("minimi-funktio odottaa vähintään yhden argumentin");
     }
 
     let mut min_val = match &numbers[0] {
-        RuntimeVal::Number(num) => num,
-        _ => panic!("min function expects only numbers in the array"),
+        RuntimeVal::Number(num) => *num,
+        RuntimeVal::Integer(i) => *i as f64,
+        _ => panic!("minimi-funktio odottaa vain numeroita taulukossa"),
     };
 
     for val in &numbers[1..] {
-        if let RuntimeVal::Number(num) = val {
-            if num < min_val {
-                min_val = num;
-            }
-        } else {
-            panic!("min function expects only numbers in the array");
+        match val {
+            RuntimeVal::Number(num) => {
+                if *num < min_val {
+                    min_val = *num;
+                }
+            },
+            RuntimeVal::Integer(i) => {
+                let val = *i as f64;
+                if val < min_val {
+                    min_val = val;
+                }
+            },
+            _ => panic!("minimi-funktio odottaa vain numeroita taulukossa"),
         }
     }
 
-    RuntimeVal::Number(*min_val)
+    RuntimeVal::Number(min_val)
 }
 
 pub fn length_function(args: Vec<RuntimeVal>, _: Vec<(String, RuntimeVal)>) -> RuntimeVal {
     let array = match &args[0] {
         RuntimeVal::Array(arr) => arr,
-        _ => panic!("length function expects an array as argument"),
+        _ => panic!("pituus-funktio odottaa taulukon argumenttina"),
     };
 
     RuntimeVal::Number(array.len() as f64)
@@ -189,13 +226,14 @@ pub fn length_function(args: Vec<RuntimeVal>, _: Vec<(String, RuntimeVal)>) -> R
 pub fn sort_function(args: Vec<RuntimeVal>, _: Vec<(String, RuntimeVal)>) -> RuntimeVal {
     let mut array = match &args[0] {
         RuntimeVal::Array(arr) => arr.clone(),
-        _ => panic!("sort function expects an array as argument"),
+        _ => panic!("järjestä-funktio odottaa taulukon argumenttina"),
     };
 
     array.sort_by(|a, b| match (a, b) {
         (RuntimeVal::Number(num_a), RuntimeVal::Number(num_b)) => num_a.partial_cmp(num_b).unwrap(),
         (RuntimeVal::String(str_a), RuntimeVal::String(str_b)) => str_a.cmp(str_b),
-        _ => panic!("sort function expects an array of numbers or strings"),
+        (RuntimeVal::Integer(int_a), RuntimeVal::Integer(int_b)) => int_a.cmp(int_b),
+        _ => panic!("järjestä-funktio odottaa joukon numeroita tai merkkijonoja"),
     });
 
     RuntimeVal::Array(array)
@@ -204,10 +242,45 @@ pub fn sort_function(args: Vec<RuntimeVal>, _: Vec<(String, RuntimeVal)>) -> Run
 pub fn reverse_function(args: Vec<RuntimeVal>, _: Vec<(String, RuntimeVal)>) -> RuntimeVal {
     let mut array = match &args[0] {
         RuntimeVal::Array(arr) => arr.clone(),
-        _ => panic!("reverse function expects an array as argument"),
+        _ => panic!("käänteinen-funktio odottaa taulukkoa argumenttina"),
     };
 
     array.reverse();
 
     RuntimeVal::Array(array)
+}
+
+pub fn kluku_function(args: Vec<RuntimeVal>, _scope: Vec<(String, RuntimeVal)>) -> RuntimeVal {
+    match args.get(0) {
+        Some(RuntimeVal::String(s)) => {
+            match s.parse::<f64>() {
+                Ok(n) => MK_INTEGER(n.floor() as i64),
+                Err(_) => panic!("kluku() expects a string that can be parsed into a number"),
+            }
+        },
+        Some(RuntimeVal::Integer(i)) => MK_INTEGER(*i),
+        Some(RuntimeVal::Number(n)) => MK_INTEGER(n.floor() as i64),
+        _ => panic!("kluku-funktio odottaa merkkijonoa, joka voidaan jäsentää luvuksi"),
+    }
+}
+
+pub fn lluku_function(args: Vec<RuntimeVal>, _scope: Vec<(String, RuntimeVal)>) -> RuntimeVal {
+    match args.get(0) {
+        Some(RuntimeVal::String(s)) => {
+            match s.parse::<f64>() {
+                Ok(n) => MK_NUMBER(n),
+                Err(_) => panic!("lluku-funktio odottaa merkkijonoa, joka voidaan jäsentää luvuksi"),
+            }
+        },
+        Some(RuntimeVal::Integer(i)) => MK_NUMBER(*i as f64),
+        Some(RuntimeVal::Number(n)) => MK_NUMBER(*n),
+        _ => panic!("lluku-funktio odottaa argumenttina merkkijonoa, klukua tai llukua"),
+    }
+}
+
+pub fn mjono_function(args: Vec<RuntimeVal>, _scope: Vec<(String, RuntimeVal)>) -> RuntimeVal {
+    match args.get(0) {
+        Some(val) => MK_STRING(val.to_string()),
+        _ => panic!("mjono-funktio odottaa argumenttia"),
+    }
 }

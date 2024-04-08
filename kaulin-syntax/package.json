@@ -1,0 +1,25 @@
+{
+  "name": "kaulin-syntax",
+  "displayName": "Kaulin",
+  "description": "Kaulin Programming Language",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.88.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "kaulin",
+      "aliases": ["Kaulin Programming Language", "kaulin"],
+      "extensions": [".ka"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "kaulin",
+      "scopeName": "source.ka",
+      "path": "./syntaxes/kaulin.tmLanguage.json"
+    }]
+  }
+}

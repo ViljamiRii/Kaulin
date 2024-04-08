@@ -96,7 +96,6 @@ impl Parser {
             }
             TokenType::Fn => {
                 let stmt = self.parse_fn_declaration();
-                self.expect_semicolon();
                 stmt
             }
             _ => Stmt::Expr(self.parse_expr()),
@@ -108,7 +107,7 @@ impl Parser {
     fn expect_semicolon(&mut self) {
         match self.expect(TokenType::SemiColon) {
             Some(_) => (),
-            None => panic!("Expected ';' after statement"),
+            None => panic!("Odotettu ';' lausunnon jälkeen"),
         }
     }
     
@@ -116,7 +115,7 @@ impl Parser {
         self.eat();
         let name = match self.expect(TokenType::Identifier) {
             Some(token) => token.value,
-            None => panic!("Expected function name following fn keyword"),
+            None => panic!("Odotettu funktion nimi funktio-avainsanan jälkeen"),
         };
 
         let args = self.parse_args();
@@ -125,13 +124,13 @@ impl Parser {
             match arg {
                 Expr::Identifier(identifier) => params.push(identifier.symbol),
                 _ =>
-                    panic!("Inside function declaration expected parameters to be of type string."),
+                    panic!("Funktiomäärityksen sisällä olevien parametrien odotetaan olevan tyyppiä merkkijono"),
             }
         }
 
         match self.expect(TokenType::OpenBrace) {
             Some(_) => (),
-            None => panic!("Expected function body following declaration"),
+            None => panic!("Odotettu toimintorunko ilmoituksen jälkeen"),
         }
         let mut body: Vec<Stmt> = Vec::new();
 
@@ -141,7 +140,7 @@ impl Parser {
 
         match self.expect(TokenType::CloseBrace) {
             Some(_) => (),
-            None => panic!("Closing brace expected inside function declaration"),
+            None => panic!("Sulkevaa aaltosuljetta odotetaan funktion määrittelyssä"),
         }
 
         Stmt::FunctionDeclaration(FunctionDeclaration {
@@ -172,7 +171,7 @@ impl Parser {
         self.expect(TokenType::OpenParen);
         let identifier = match self.expect(TokenType::Identifier) {
             Some(token) => token.value,
-            None => panic!("Expected identifier name following 'olkoon' keyword."),
+            None => panic!("Odotettu tunnisteen nimi avainsanan 'olkoon' jälkeen"),
         };
         self.expect(TokenType::Assign);
         let initialization = Box::new(self.parse_expr());
@@ -218,7 +217,7 @@ impl Parser {
                 Identifier {
                     symbol: token.value,
                 },
-            None => panic!("Expected identifier name following let | const keywords."),
+            None => panic!("Odotettu tunnisteen nimi seuraten olkoon | vakio avainsanoja"),
         };
 
         if self.at().token_type == TokenType::Assign {
@@ -232,7 +231,7 @@ impl Parser {
             })
         } else {
             if is_constant {
-                panic!("Must assign value to constant expression. No value provided.");
+                panic!("Vakiolausekkeelle on annettava arvo ja arvoa ei ole annettu");
             } else {
                 Stmt::VarDeclaration(VarDeclaration {
                     identifier,
@@ -277,14 +276,14 @@ impl Parser {
             if self.at().token_type != TokenType::CloseBracket {
                 match self.expect(TokenType::Comma) {
                     Some(_) => (),
-                    None => panic!("Expected comma or closing bracket following array element"),
+                    None => panic!("Odotettu pilkku tai sulkeva hakasulku taulukon elementin jälkeen"),
                 };
             }
         }
 
         match self.expect(TokenType::CloseBracket) {
             Some(_) => (),
-            None => panic!("Array literal missing closing bracket."),
+            None => panic!("Taulukko literaali puuttuu sulkevasta hakasulusta"),
         }
 
         Expr::ArrayLiteral(ArrayLiteral { elements })
@@ -303,7 +302,7 @@ impl Parser {
         while self.not_eof() && self.at().token_type != TokenType::CloseBrace {
             let key = match self.expect(TokenType::Identifier) {
                 Some(token) => token.value,
-                None => panic!("Object literal key expected"),
+                None => panic!("Olio literaali odottaa avainta"),
             };
 
             // Allows shorthand key: pair -> { key, }
@@ -322,7 +321,7 @@ impl Parser {
             // { key: val }
             match self.expect(TokenType::Colon) {
                 Some(_) => (),
-                None => panic!("Missing colon following identifier in ObjectExpr"),
+                None => panic!("Oliolauseesta puuttuu kaksoispiste tunnisteesta"),
             }
             let value = self.parse_expr();
 
@@ -330,14 +329,14 @@ impl Parser {
             if self.at().token_type != TokenType::CloseBrace {
                 match self.expect(TokenType::Comma) {
                     Some(_) => (),
-                    None => panic!("Expected comma or closing bracket following property"),
+                    None => panic!("Omaisuuden jälkeen odotettu pilkku tai sulkeva hakasulku"),
                 };
             }
         }
 
         match self.expect(TokenType::CloseBrace) {
             Some(_) => (),
-            None => panic!("Object literal missing closing brace."),
+            None => panic!("Olio literaalista puuttuu sulkumerkki"),
         }
         Expr::ObjectLiteral(ObjectLiteral { properties })
     }
@@ -355,7 +354,7 @@ impl Parser {
                 ">" => BinaryOperator::GreaterThan,
                 "<=" => BinaryOperator::LessThanOrEqual,
                 ">=" => BinaryOperator::GreaterThanOrEqual,
-                _ => panic!("Unexpected operator"),
+                _ => panic!("Odottamaton operaattori"),
             };
             let right = self.parse_logical_expr();
             left = Expr::BinaryExpr(BinaryExpr {
@@ -377,7 +376,7 @@ impl Parser {
             let operator = match self.eat().value.as_str() {
                 "&&" => BinaryOperator::And,
                 "||" => BinaryOperator::Or,
-                _ => panic!("Unexpected operator"),
+                _ => panic!("Odottamaton operaattori"),
             };
             let right = self.parse_additive_expr();
             left = Expr::BinaryExpr(BinaryExpr {
@@ -425,7 +424,7 @@ impl Parser {
                         value: Box::new(new_value),
                     });
                 }
-                _ => panic!("Unexpected operator"),
+                _ => panic!("Odottamaton operaattori"),
             };
             let right = self.parse_multiplicative_expr();
             left = Expr::BinaryExpr(BinaryExpr {
@@ -448,7 +447,7 @@ impl Parser {
                 "*" => BinaryOperator::Multiply,
                 "/" => BinaryOperator::Divide,
                 "%" => BinaryOperator::Modulus,
-                _ => panic!("Unexpected operator"),
+                _ => panic!("Odottamaton operaattori"),
             };
             let right = self.parse_exponentiation_expr();
             left = Expr::BinaryExpr(BinaryExpr {
@@ -576,7 +575,7 @@ impl Parser {
                 if let Expr::Identifier(_) = *property {
                     // property is an identifier
                 } else {
-                    panic!("Expected identifier following dot operator");
+                    panic!("Odotettu tunniste pisteoperaattorin jälkeen");
                 }
             } else {
                 computed = true;
@@ -622,7 +621,7 @@ impl Parser {
                 Expr::StringLiteral(StringLiteral { value })
             }
 
-            _ => panic!("Unexpected token found during parsing! {:?}", self.at()),
+            _ => panic!("Odottamaton tunnus löytyi jäsentämisen aikana! {:?}", self.at()),
         }
     }
 }

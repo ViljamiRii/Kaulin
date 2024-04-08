@@ -9,6 +9,7 @@ pub fn create_global_env() -> Environment {
     env.declare_var("tyhjä".to_string(), MK_NULL(), true);
     env.declare_var("tulosta".to_string(), MK_NATIVE_FN(Rc::new(print_function)), true);
     env.declare_var("aika".to_string(), MK_NATIVE_FN(Rc::new(time_function)), true);
+    env.declare_var("sekunnit".to_string(), MK_NATIVE_FN(Rc::new(millis_to_seconds_function)), true);
     env.declare_var("itseisarvo".to_string(), MK_NATIVE_FN(Rc::new(abs_function)), true);
     env.declare_var("pyöristä".to_string(), MK_NATIVE_FN(Rc::new(round_function)), true);
     env.declare_var("neliöjuuri".to_string(), MK_NATIVE_FN(Rc::new(sqrt_function)), true);
@@ -19,6 +20,9 @@ pub fn create_global_env() -> Environment {
     env.declare_var("pituus".to_string(), MK_NATIVE_FN(Rc::new(length_function)), true);
     env.declare_var("järjestä".to_string(), MK_NATIVE_FN(Rc::new(sort_function)), true);
     env.declare_var("käänteinen".to_string(), MK_NATIVE_FN(Rc::new(reverse_function)), true);
+    env.declare_var("kluku".to_string(), MK_NATIVE_FN(Rc::new(kluku_function)), true);
+    env.declare_var("lluku".to_string(), MK_NATIVE_FN(Rc::new(lluku_function)), true);
+    env.declare_var("mjono".to_string(), MK_NATIVE_FN(Rc::new(mjono_function)), true);
     env
 }
 
@@ -45,7 +49,7 @@ impl Environment {
         constant: bool
     ) -> RuntimeVal {
         if self.variables.iter().any(|(name, _)| name == &varname) {
-            panic!("Cannot declare variable {}. As it already is defined.", varname);
+            panic!("Ei voida määrittää muuttujaa {}, sillä se on jo määritelty.", varname);
         }
 
         self.variables.push((varname.clone(), value.clone()));
@@ -60,7 +64,7 @@ impl Environment {
 
         // Cannot assign to constant
         if env.constants.contains(&varname) {
-            panic!("Cannot reassign to variable {} as it was declared constant.", varname);
+            panic!("Ei voida määrittää uudelleen muuttujaa {}, koska se luotiin vakioksi.", varname);
         }
 
         if let Some((_, val)) = env.variables.iter_mut().find(|(name, _)| name == &varname) {
@@ -85,7 +89,7 @@ impl Environment {
 
         match &mut self.parent {
             Some(parent) => parent.resolve(varname),
-            None => panic!("Cannot resolve '{}' as it does not exist.", varname),
+            None => panic!("Kohdetta '{}' ei voida ratkaista, koska sitä ei ole olemassa.", varname),
         }
     }
 }
