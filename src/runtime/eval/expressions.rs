@@ -42,38 +42,84 @@ fn eval_numeric_binary_expr(lhs: f64, rhs: f64, operator: &BinaryOperator) -> Ru
 }
 
 pub fn eval_binary_expr(binop: &BinaryExpr, env: &mut Environment) -> RuntimeVal {
-    let lhs = evaluate(&Stmt::Expr((*binop.left).clone()), env);
-    let rhs = evaluate(&Stmt::Expr((*binop.right).clone()), env);
+    let lhs = eval_expr(&*binop.left, env);
+    let rhs = eval_expr(&*binop.right, env);
 
-    match (&lhs, &rhs) {
-        (RuntimeVal::Number(n1), RuntimeVal::Number(n2)) => {
-            let lhs = *n1;
-            let rhs = *n2;
-            eval_numeric_binary_expr(lhs, rhs, &binop.operator)
-        }
-        (RuntimeVal::Integer(i1), RuntimeVal::Integer(i2)) => {
-            match binop.operator {
-                BinaryOperator::Add => RuntimeVal::Integer(i1 + i2),
-                BinaryOperator::Subtract => RuntimeVal::Integer(i1 - i2),
-                _ => panic!("Kokonaislukujen operaattoria ei tueta"),
-            }
-        }
-        (RuntimeVal::String(s1), RuntimeVal::String(s2)) if
-            binop.operator == BinaryOperator::Add
-        => {
-            RuntimeVal::String(s1.clone() + s2)
-        }
-        (RuntimeVal::Bool(b1), RuntimeVal::Bool(b2)) if
-            binop.operator == BinaryOperator::And ||
-            binop.operator == BinaryOperator::Or
-        => {
-            match binop.operator {
-                BinaryOperator::And => RuntimeVal::Bool(*b1 && *b2),
-                BinaryOperator::Or => RuntimeVal::Bool(*b1 || *b2),
-                _ => panic!("Odottamaton operaattori"),
-            }
-        }
-        _ => panic!("Tukematonta operandityyppiä ei tueta binääritoiminnalle"),
+    match binop.operator {
+        BinaryOperator::Add => match (&lhs, &rhs) {
+            (RuntimeVal::Number(n1), RuntimeVal::Number(n2)) => RuntimeVal::Number(n1 + n2),
+            (RuntimeVal::Integer(i1), RuntimeVal::Integer(i2)) => RuntimeVal::Integer(i1 + i2),
+            (RuntimeVal::String(s1), RuntimeVal::String(s2)) => RuntimeVal::String(s1.clone() + s2),
+            _ => panic!("Tukematon operandityyppi yhteenlaskuun"),
+        },
+        BinaryOperator::Subtract => match (&lhs, &rhs) {
+            (RuntimeVal::Number(n1), RuntimeVal::Number(n2)) => RuntimeVal::Number(n1 - n2),
+            (RuntimeVal::Integer(i1), RuntimeVal::Integer(i2)) => RuntimeVal::Integer(i1 - i2),
+            _ => panic!("Tukematon operandityyppi vähennyslaskuun"),
+        },
+        BinaryOperator::Multiply => match (&lhs, &rhs) {
+            (RuntimeVal::Number(n1), RuntimeVal::Number(n2)) => RuntimeVal::Number(n1 * n2),
+            (RuntimeVal::Integer(i1), RuntimeVal::Integer(i2)) => RuntimeVal::Integer(i1 * i2),
+            _ => panic!("Tukematon operandityyppi kertolaskuun"),
+        },
+        BinaryOperator::Divide => match (&lhs, &rhs) {
+            (RuntimeVal::Number(n1), RuntimeVal::Number(n2)) => RuntimeVal::Number(n1 / n2),
+            (RuntimeVal::Integer(i1), RuntimeVal::Integer(i2)) => RuntimeVal::Integer(i1 / i2),
+            _ => panic!("Tukematon operandityyppi jakolaskuun"),
+        },
+        BinaryOperator::Exponent => match (&lhs, &rhs) {
+            (RuntimeVal::Number(n1), RuntimeVal::Number(n2)) => RuntimeVal::Number(n1.powf(*n2)),
+            (RuntimeVal::Integer(i1), RuntimeVal::Integer(i2)) => RuntimeVal::Integer(i1.pow(*i2 as u32)),
+            _ => panic!("Tukematon operandityyppi potenssiin"),
+        },
+        BinaryOperator::Modulus => match (&lhs, &rhs) {
+            (RuntimeVal::Number(n1), RuntimeVal::Number(n2)) => RuntimeVal::Number(n1 % n2),
+            (RuntimeVal::Integer(i1), RuntimeVal::Integer(i2)) => RuntimeVal::Integer(i1 % i2),
+            _ => panic!("Tukematon operandityyppi jakojäännökseen"),
+        },
+        BinaryOperator::AddEqual => match (&lhs, &rhs) {
+            (RuntimeVal::Number(n1), RuntimeVal::Number(n2)) => RuntimeVal::Number(*n1 + *n2),
+            (RuntimeVal::Integer(i1), RuntimeVal::Integer(i2)) => RuntimeVal::Integer(*i1 + *i2),
+            _ => panic!("Tukematon operandityyppi yhteenlaskuun ja sijoitukseen"),
+        },
+        BinaryOperator::SubtractEqual => match (&lhs, &rhs) {
+            (RuntimeVal::Number(n1), RuntimeVal::Number(n2)) => RuntimeVal::Number(*n1 - *n2),
+            (RuntimeVal::Integer(i1), RuntimeVal::Integer(i2)) => RuntimeVal::Integer(*i1 - *i2),
+            _ => panic!("Tukematon operandityyppi vähennyslaskuun ja sijoitukseen"),
+        },
+        BinaryOperator::Equal => match (&lhs, &rhs) {
+            (RuntimeVal::Number(n1), RuntimeVal::Number(n2)) => RuntimeVal::Bool(n1 == n2),
+            (RuntimeVal::Integer(i1), RuntimeVal::Integer(i2)) => RuntimeVal::Bool(i1 == i2),
+            (RuntimeVal::String(s1), RuntimeVal::String(s2)) => RuntimeVal::Bool(s1 == s2),
+            _ => panic!("Tukematon operandityyppi yhtäsuuruuden tarkistukseen"),
+        },
+        BinaryOperator::NotEqual => match (&lhs, &rhs) {
+            (RuntimeVal::Number(n1), RuntimeVal::Number(n2)) => RuntimeVal::Bool(n1 != n2),
+            (RuntimeVal::Integer(i1), RuntimeVal::Integer(i2)) => RuntimeVal::Bool(i1 != i2),
+            (RuntimeVal::String(s1), RuntimeVal::String(s2)) => RuntimeVal::Bool(s1 != s2),
+            _ => panic!("Tukematon operandityyppi erisuuruuden tarkistukseen"),
+        },
+        BinaryOperator::LessThan => match (&lhs, &rhs) {
+            (RuntimeVal::Number(n1), RuntimeVal::Number(n2)) => RuntimeVal::Bool(n1 < n2),
+            (RuntimeVal::Integer(i1), RuntimeVal::Integer(i2)) => RuntimeVal::Bool(i1 < i2),
+            _ => panic!("Tukematon operandityyppi pienempi kuin -tarkistukseen"),
+        },
+        BinaryOperator::GreaterThan => match (&lhs, &rhs) {
+            (RuntimeVal::Number(n1), RuntimeVal::Number(n2)) => RuntimeVal::Bool(n1 > n2),
+            (RuntimeVal::Integer(i1), RuntimeVal::Integer(i2)) => RuntimeVal::Bool(i1 > i2),
+            _ => panic!("Tukematon operandityyppi suurempi kuin -tarkistukseen"),
+        },
+        BinaryOperator::LessThanOrEqual => match (&lhs, &rhs) {
+            (RuntimeVal::Number(n1), RuntimeVal::Number(n2)) => RuntimeVal::Bool(n1 <= n2),
+            (RuntimeVal::Integer(i1), RuntimeVal::Integer(i2)) => RuntimeVal::Bool(i1 <= i2),
+            _ => panic!("Tukematon operandityyppi pienempi tai yhtä suuri kuin -tarkistukseen"),
+        },
+        BinaryOperator::GreaterThanOrEqual => match (&lhs, &rhs) {
+            (RuntimeVal::Number(n1), RuntimeVal::Number(n2)) => RuntimeVal::Bool(n1 >= n2),
+            (RuntimeVal::Integer(i1), RuntimeVal::Integer(i2)) => RuntimeVal::Bool(i1 >= i2),
+            _ => panic!("Tukematon operandityyppi suurempi tai yhtä suuri kuin -tarkistukseen"),
+        },
+        _ => panic!("Tukematon operaattori"),
     }
 }
 
@@ -83,10 +129,10 @@ pub fn eval_identifier(ident: &Identifier, env: &mut Environment) -> RuntimeVal 
 }
 
 pub fn eval_assignment(assignment_expr: &AssignmentExpr, env: &mut Environment) -> RuntimeVal {
-    match *assignment_expr.assignee {
-        Expr::Identifier(ref ident) => {
-            let value = evaluate(&Stmt::Expr(*assignment_expr.value.clone()), env);
-            env.assign_var(ident.symbol.clone(), value.clone());
+    match &*assignment_expr.assignee {
+        Expr::Identifier(ident) => {
+            let value = eval_expr(&assignment_expr.value, env);
+            env.assign_var(&ident.symbol, &value);
             value
         }
         _ => panic!("Virheellinen vasen puoli lausekkeen sisällä {:?}", assignment_expr.assignee),
@@ -98,7 +144,7 @@ pub fn eval_object_expr(obj: &ObjectLiteral, env: &mut Environment) -> RuntimeVa
 
     for property in &obj.properties {
         let runtime_val = match &property.value {
-            Some(value) => evaluate(&Stmt::Expr((**value).clone()), env),
+            Some(value) => eval_expr(value, env),
             None => env.lookup_var(&property.key),
         };
 
@@ -109,19 +155,14 @@ pub fn eval_object_expr(obj: &ObjectLiteral, env: &mut Environment) -> RuntimeVa
 }
 
 pub fn eval_array_expr(array_literal: &ArrayLiteral, env: &mut Environment) -> RuntimeVal {
-    let mut runtime_vals = Vec::new();
-    for expr in &array_literal.elements {
-        runtime_vals.push(evaluate(&Stmt::Expr((**expr).clone()), env));
-    }
+    let runtime_vals: Vec<RuntimeVal> = array_literal.elements.iter().map(|expr| eval_expr(expr, env)).collect();
     MK_ARRAY(runtime_vals)
 }
 
 pub fn eval_call_expr(expr: &CallExpr, env: &mut Environment) -> RuntimeVal {
-    let args: Vec<RuntimeVal> = expr.args
-        .iter()
-        .map(|arg| evaluate(&Stmt::Expr((*arg).clone()), env))
-        .collect();
-    let fn_val = evaluate(&Stmt::Expr((*expr.caller).clone()), env);
+    let args: Vec<RuntimeVal> = expr.args.iter().map(|arg| eval_expr(arg, env)).collect();
+    let fn_val = eval_expr(&expr.caller, env);
+
 
     match fn_val {
         RuntimeVal::NativeFunction(native_fn) => {
@@ -157,7 +198,7 @@ pub fn eval_call_expr(expr: &CallExpr, env: &mut Environment) -> RuntimeVal {
 }
 
 pub fn eval_member_expr(expr: &MemberExpr, env: &mut Environment) -> RuntimeVal {
-    let object = evaluate(&Stmt::Expr((*expr.object).clone()), env);
+    let object = eval_expr(&expr.object, env);
     let property = match &*expr.property {
         Expr::Identifier(ident) => ident.symbol.clone(),
         _ => panic!("Omaisuuden on oltava tunniste"),
@@ -176,7 +217,7 @@ pub fn eval_member_expr(expr: &MemberExpr, env: &mut Environment) -> RuntimeVal 
 }
 
 pub fn eval_unary_expr(unary_expr: &UnaryExpr, env: &mut Environment) -> RuntimeVal {
-    let operand = evaluate(&Stmt::Expr((*unary_expr.operand).clone()), env);
+    let operand = eval_expr(&unary_expr.operand, env);
     match unary_expr.operator.as_str() {
         "-" => {
             if let RuntimeVal::Number(n) = operand {
@@ -197,7 +238,7 @@ pub fn eval_unary_expr(unary_expr: &UnaryExpr, env: &mut Environment) -> Runtime
 }
 
 pub fn eval_if_else_expr(if_else_expr: &IfElseExpr, env: &mut Environment) -> RuntimeVal {
-    let condition = evaluate(&Stmt::Expr((*if_else_expr.condition).clone()), env);
+    let condition = eval_expr(&if_else_expr.condition, env);
     match condition {
         RuntimeVal::Bool(b) => {
             if b {
@@ -225,15 +266,8 @@ pub fn eval_if_else_expr(if_else_expr: &IfElseExpr, env: &mut Environment) -> Ru
 
 pub fn eval_string_literal(string_literal: &StringLiteral, env: &mut Environment, args: &[RuntimeVal]) -> RuntimeVal {
     let mut output = string_literal.value.clone();
-    let mut args_iter = args.iter();
-
-    while let Some(pos) = output.find("%{}") {
-        if let Some(arg) = args_iter.next() {
-            output = output.replacen("%{}", &format!("{}", arg), 1);
-        } else {
-            break;
-        }
+    for arg in args {
+        output = output.replace("%{}", &format!("{}", arg)); // Replace first occurrence of "%{}" with the argument
     }
-
     MK_STRING(output)
 }

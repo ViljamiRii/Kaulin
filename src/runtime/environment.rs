@@ -59,18 +59,18 @@ impl Environment {
         value
     }
 
-    pub fn assign_var(&mut self, varname: String, value: RuntimeVal) -> RuntimeVal {
-        let env = self.resolve(&varname);
-
+    pub fn assign_var(&mut self, varname: &String, value: &RuntimeVal) {
+        let env = self.resolve(varname);
+    
         // Cannot assign to constant
-        if env.constants.contains(&varname) {
+        if env.constants.contains(varname) {
             panic!("Ei voida määrittää uudelleen muuttujaa {}, koska se luotiin vakioksi.", varname);
         }
-
-        if let Some((_, val)) = env.variables.iter_mut().find(|(name, _)| name == &varname) {
+    
+        if let Some((_, val)) = env.variables.iter_mut().find(|(name, _)| *name == *varname) {
             *val = value.clone();
         }
-        value
+        value.clone();
     }
 
     pub fn lookup_var(&mut self, varname: &str) -> RuntimeVal {
