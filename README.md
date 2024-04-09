@@ -52,7 +52,7 @@ kommentteja kirjoittamalla kommentin näin.
 
 funktio laske_miljoonaan() {
     olkoon aloitus_aika = aika();
-    toista ( olkoon i = 0; i < 1000000; i += 1 ) {
+    toista ( olkoon i = 0; i < 100000000; i += 1 ) {
         // passes automatically
     }
     olkoon lopetus_aika = aika();
@@ -62,7 +62,7 @@ funktio laske_miljoonaan() {
 
 laske_miljoonaan()
 
-Kesto: 366 ms
+Kesto: 5394 ms
 ```
 ### Sama pythonilla:
 >Same with python:
@@ -71,7 +71,7 @@ import time
 
 def laske_miljoonaan():
     aloitus_aika = time.time() * 1000 
-    for i in range(1000000):
+    for i in range(100_000_000):
         pass 
     lopetus_aika = time.time() * 1000 
     koko_kesto = lopetus_aika - aloitus_aika
@@ -80,10 +80,10 @@ def laske_miljoonaan():
 
 laske_miljoonaan()
 
-Kesto: 16 ms
+Kesto: 1345 ms
 ```
-Tästä voi huomata, että kieli on todella huonosti optimoitu, eikä sitä kannata käyttää raskasta laskemista varten. Python on noin 23 kertaa nopeampi.
-> As we can see from this example, the language is poorly optimized and should not be used for heavy calculations. Python is about 23 times faster.
+Tästä voi huomata, että kieli on huonosti optimoitu, eikä sitä kannata käyttää raskasta laskemista varten. Python on noin 4 kertaa nopeampi.
+> As we can see from this example, the language is poorly optimized and should not be used for heavy calculations. Python is about 4 times faster.
 
 # Syntax korostus
 >Syntax highighting
