@@ -1,5 +1,13 @@
-funktio hei_maailma() {
-    tulosta("Hei maailma!")
+funktio laske_miljoonaan() {
+    olkoon aloitus_aika = aika();
+    toista ( olkoon i = 0; i < 100000000; i += 1 ) {
+        // ei mitään
+    }
+    olkoon lopetus_aika = aika();
+
+    olkoon koko_kesto = lopetus_aika - aloitus_aika;
+    olkoon s_koko_kesto = sekunnit(koko_kesto);
+    tulosta("Kesto: %{} ms tai %{} s", koko_kesto, s_koko_kesto)
 }
 
-hei_maailma()
+laske_miljoonaan()

@@ -30,7 +30,14 @@ impl RuntimeVal {
             RuntimeVal::Function(_) => true,
         }
     }
+    pub fn as_bool(&self) -> Option<bool> {
+        match self {
+            RuntimeVal::Bool(b) => Some(*b),
+            _ => None,
+        }
+    }
 }
+
 
 pub struct NativeFunction(Rc<dyn Fn(Vec<RuntimeVal>, Vec<(String, RuntimeVal)>) -> RuntimeVal>);
 

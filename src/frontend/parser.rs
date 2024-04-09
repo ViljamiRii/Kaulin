@@ -219,27 +219,23 @@ impl Parser {
                 },
             None => panic!("Odotettu tunnisteen nimi seuraten olkoon | vakio avainsanoja"),
         };
-
-        if self.at().token_type == TokenType::Assign {
+    
+        let value = if self.at().token_type == TokenType::Assign {
             self.expect(TokenType::Assign);
-            let value = Some(self.parse_expr());
-
-            Stmt::VarDeclaration(VarDeclaration {
-                identifier: identifier.clone(),
-                constant: is_constant,
-                value,
-            })
+            Some(self.parse_expr())
         } else {
             if is_constant {
                 panic!("Vakiolausekkeelle on annettava arvo ja arvoa ei ole annettu");
             } else {
-                Stmt::VarDeclaration(VarDeclaration {
-                    identifier,
-                    constant: false,
-                    value: None,
-                })
+                None
             }
-        }
+        };
+    
+        Stmt::VarDeclaration(VarDeclaration {
+            identifier,
+            constant: is_constant,
+            value,
+        })
     }
 
     // Parses assignment expressions
@@ -398,40 +394,35 @@ impl Parser {
             let operator = match self.eat().value.as_str() {
                 "+" => BinaryOperator::Add,
                 "-" => BinaryOperator::Subtract,
-                "+=" => {
-                    let right = self.parse_multiplicative_expr();
-                    let left_clone = left.clone();
-                    let new_value = Expr::BinaryExpr(BinaryExpr {
-                        left: Box::new(left_clone),
-                        right: Box::new(right),
-                        operator: BinaryOperator::Add,
-                    });
-                    return Expr::AssignmentExpr(AssignmentExpr {
-                        assignee: Box::new(left),
-                        value: Box::new(new_value),
-                    });
-                }
-                "-=" => {
-                    let right = self.parse_multiplicative_expr();
-                    let left_clone = left.clone();
-                    let new_value = Expr::BinaryExpr(BinaryExpr {
-                        left: Box::new(left_clone),
-                        right: Box::new(right),
-                        operator: BinaryOperator::Subtract,
-                    });
-                    return Expr::AssignmentExpr(AssignmentExpr {
-                        assignee: Box::new(left),
-                        value: Box::new(new_value),
-                    });
-                }
+                "+=" => BinaryOperator::AddEqual,
+                "-=" => BinaryOperator::SubtractEqual,
                 _ => panic!("Odottamaton operaattori"),
             };
+    
             let right = self.parse_multiplicative_expr();
-            left = Expr::BinaryExpr(BinaryExpr {
-                left: Box::new(left),
-                right: Box::new(right),
-                operator,
-            });
+    
+            if operator == BinaryOperator::Add || operator == BinaryOperator::Subtract {
+                left = Expr::BinaryExpr(BinaryExpr {
+                    left: Box::new(left),
+                    right: Box::new(right),
+                    operator,
+                });
+            } else {
+                let new_value = Expr::BinaryExpr(BinaryExpr {
+                    left: Box::new(left.clone()),
+                    right: Box::new(right.clone()),
+                    operator: if operator == BinaryOperator::AddEqual {
+                        BinaryOperator::Add
+                    } else {
+                        BinaryOperator::Subtract
+                    },
+                });
+    
+                left = Expr::AssignmentExpr(AssignmentExpr {
+                    assignee: Box::new(left),
+                    value: Box::new(new_value),
+                });
+            }
         }
     
         left
