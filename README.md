@@ -12,7 +12,7 @@ Kieli ja sen syntaxi on tarkoitettu kirjoitettavaksi kokonaan Suomen kielellä.
 > The language and it's syntax is meant to be written completely in Finnish. If you want to learn finnish while learning a half built language, this is a great option!
 
 ### Ennen Kaulimen käyttöä:
-Kieli ei ole millään tavalla valmis, eikä luultavasti ikinä tule olemaan. Olen ainoa kielen kehittäjä ja teen kieltä vapaa-ajallani koulun vieressä. Kielen tarkoitus oli olla opettavainen kokemus minulle ja se täytti tarkoituksensa.
+Kieli ei ole millään tavalla valmis, eikä luultavasti ikinä tule olemaan. Olen kielen ainoa kehittäjä ja teen kieltä vapaa-ajallani koulun vieressä. Kielen tarkoitus oli olla opettavainen kokemus minulle ja se täytti tarkoituksensa.
 Jonkin näköinen dokumentaatio on tulossa kunhan kerkeän.
 > ### Before using
 > The language is in no way complete and will probably never be. I am the only developer working on this language and I'm doing it in my free time next to school. The goal of this project was to be an educational experience for me and it has served it's purpose.
