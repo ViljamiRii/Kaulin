@@ -86,7 +86,7 @@ Tästä voi huomata, että kieli on huonosti optimoitu, eikä sitä kannata käy
 > As we can see from this example, the language is poorly optimized and should not be used for heavy calculations. Python is about 4 times faster.
 
 # Syntax korostus
->Syntax highighting
+>Syntax highlighting
 
 Kielelle on luotu syntax korostus Visual Studio Codea varten. Voit lisätä syntax korostuksen lataamalla [Github Repository](https://github.com/ViljamiRii/Kaulin/archive/refs/heads/master.zip)n.
 Lataamisen jälkeen mene Kaulin-master tiedostoon terminaalilla ja käytä komento:
