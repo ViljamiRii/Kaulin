@@ -8,8 +8,8 @@
 Kaulin on Rust:lla tehty ohjelmointikieli jonka tein, koska tahdoin oppia lisää rustista. Kaulin skriptit toimivat tiedostopäätteellä .ka. Kielen syntaxi on sen uniikein elementti. 
 Kieli ja sen syntaxi on tarkoitettu kirjoitettavaksi kokonaan Suomen kielellä. 
 > # Introduction
-> Kaulin is Rust made programming language which I made because I wanted to familiarize my self with the language. Kaulin scripts have the file extension .ka. The syntax of the language is it's most unique element.
-> The language and it's syntax is meant to be written completely in Finnish. If you want to learn finnish while learning a half built language, this is a great option!
+> Kaulin is Rust made programming language which I made to familiarize my self with the language. Kaulin scripts have the file extension .ka. The syntax of the language is it's most unique element as
+> the language and it's syntax is meant to be written completely in Finnish. If you want to learn finnish while using a half built language, this is a great option!
 
 ### Ennen Kaulimen käyttöä:
 Kieli ei ole millään tavalla valmis, eikä luultavasti ikinä tule olemaan. Olen kielen ainoa kehittäjä ja teen kieltä vapaa-ajallani koulun vieressä. Kielen tarkoitus oli olla opettavainen kokemus minulle ja se täytti tarkoituksensa.
